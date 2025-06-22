@@ -2,7 +2,7 @@ class Errand {
     constructor(rowNum, data) {
         this.rowNum = rowNum;
         this.data = new Map(data);
-        this.visitors = createVisitors(
+        this.visitors = Visitor.from(
             this.data.get(`Hjälpte`),
             this.data.get(`Åldersgrupp`),
         );
@@ -36,30 +36,16 @@ class Errand {
         data[${this.data.entries().toArray()}]\n
         }`;
     }
-}
 
-function createErrandsOLD(sheet, rowHeaders = 1, rowDataStart = 2) {
-    function getDataRows(sheet, rowStart, rowEnd) {
-        const start = rowStart ?? 1;
-        const end = rowEnd ?? sheet.getLastRow();
-        const max = Math.max(end - start + 1, 0);
-        return max ? sheet.getRange(start, 1, max, sheet.getLastColumn()).getValues() : [];
+    static from(sheet) {
+        const [headers, ...records] = sheet.getRange(
+            1, 1, sheet.getLastRow(), sheet.getLastColumn()
+        ).getValues();
+        return records.map((record, index) => {
+            const zipped = headers.map((header, index) => [header, record[index]]);
+            return new Errand(index, zipped);
+        });
     }
-    const getData = getDataRows.bind(null, sheet);
-    const headers = getData(rowHeaders, rowHeaders);
-    return getData(rowDataStart).map(
-        (data, index) => new Errand(headers, data, index)
-    );
-}
-
-function createErrands(sheet) {
-    const [headers, ...records] = sheet.getRange(
-        1, 1, sheet.getLastRow(), sheet.getLastColumn()
-    ).getValues();
-    return records.map((record, index) => {
-        const zipped = headers.map((header, index) => [header, record[index]]);
-        return new Errand(index, zipped);
-    });
 }
 
 function dataType(arg) {
@@ -76,18 +62,18 @@ class Visitor {
         const str = entriesToStr(Object.entries(this));
         return `${this.constructor.name} { ${str} }`;
     }
-}
 
-function createVisitors(strPerson, strAge) {
-    try {
-        //console.log(`strPerson[${strPerson}], strAge[${strAge}]`);
-        const arrayPerson = customStrToArray(strPerson);
-        const arrayAge = customStrToArray(strAge);
-        const normalizePerson = normalizeArray(arrayPerson, arrayAge).map(substitutesCallback);
-        const normalizeAge = normalizeArray(arrayAge, arrayPerson);
-        return normalizePerson.map((person, index) => new Visitor(person, normalizeAge[index]));
-    } catch (failure) {
-        return (console.log(`${createVisitors.name} caught exception:`, failure), null);
+    static from(strPerson, strAge) {
+        try {
+            //console.log(`strPerson[${strPerson}], strAge[${strAge}]`);
+            const arrayPerson = customStrToArray(strPerson);
+            const arrayAge = customStrToArray(strAge);
+            const normalizePerson = normalizeArray(arrayPerson, arrayAge).map(substitutesCallback);
+            const normalizeAge = normalizeArray(arrayAge, arrayPerson);
+            return normalizePerson.map((person, index) => new Visitor(person, normalizeAge[index]));
+        } catch (failure) {
+            return (console.log(`${createVisitors.name} caught exception:`, failure), null);
+        }
     }
 }
 

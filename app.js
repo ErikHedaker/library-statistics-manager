@@ -4,7 +4,7 @@ function onOpen(event) {
         input: spreadsheet.getSheetByName(`Ärende`),
         output: spreadsheet.getSheetByName(`Statistisk`),
     };
-    const errands = createErrands(sheet.input);
+    const errands = Errand.from(sheet.input);
     const filtered = filterErrands(errands);
     //const stats = getStatistics(filtered, errands.length);
     const manager = new StatisticsManager(errands);
