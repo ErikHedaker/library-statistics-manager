@@ -12,58 +12,70 @@ class StatisticsManager {
         this.errands = errands;
         this.filtered = this.errands.filter(Errand.filter);
         const freqFn = frequencyCountSorted.bind(null, this.filtered);
+        this.indent = new Indentation();
+        const indentGroup = this.indent.next();
+        const indentMember = indentGroup.next().next();
         this.frequency = {
             primary: new DataGroup(`Frequency count for primary visitor helped`, {
-                combined: new DataMember(`Sorted by person & age`, freqFn(errand => String(errand.primary))),
-                person: new DataMember(`Sorted by person`, freqFn(errand => errand.primary.person)),
-                age: new DataMember(`Sorted by age`, freqFn(errand => errand.primary.age)),
-            }),
+                combined: new DataMember(
+                    `Sorted by person & age`,
+                    freqFn(errand => String(errand.primary)),
+                    indentMember),
+                person: new DataMember(
+                    `Sorted by person`,
+                    freqFn(errand => errand.primary.person),
+                    indentMember),
+                age: new DataMember(
+                    `Sorted by age`,
+                    freqFn(errand => errand.primary.age),
+                    indentMember),
+            }, indentGroup),
         };
     }
 
     toString() {
-        const base = `\n`;
-        const next = `\n` + ``.padEnd(2);
+        const { current, previous } = this.indent.resolve;
         return multiline`
-            ${this.constructor.name} {${next}
-            errands: [${arrayLengthToStr(this.errands)}]${next}
-            filtered: [${arrayLengthToStr(this.filtered)}]${next}
-            frequency: [${objectToStr(this.frequency, ``, next, `,`)}]
-            ${base}}`;
+            ${this.constructor.name} {${current}
+            errands: [${arrayLengthToStr(this.errands)}]${current}
+            filtered: [${arrayLengthToStr(this.filtered)}]${current}
+            frequency: [${objectToStr(this.frequency, this.indent.next())}]
+            ${previous}}`;
     }
 }
 
 class DataGroup {
-    constructor(header, members) {
+    constructor(header, members, indent) {
         this.header = header;
         this.members = members;
+        this.indent = indent;
     }
 
     toString() {
-        const base = `\n` + ``.padEnd(2);
-        const next = `\n` + ``.padEnd(4);
+        const { current, previous } = this.indent.resolve;
         return multiline`
-            ${this.constructor.name} {${next}
-            header: [${this.header}],${next}
-            members: [${objectToStr(this.members, ``, next, `,`)}],
-            ${base}}`;
+            ${this.constructor.name} {${current}
+            header: [${this.header}],${current}
+            members: [${objectToStr(this.members, this.indent.next())}],
+            ${previous}}`;
     }
 }
 
 class DataMember {
-    constructor(header, data) {
+    constructor(header, data, indent) {
         this.header = header;
         this.data = data;
+        this.indent = indent;
     }
 
     toString() {
-        const base = `\n` + ``.padEnd(4);
-        const next = `\n` + ``.padEnd(6);
+        const { current, previous } = this.indent.resolve;
+        const indentObj = this.indent.next().resolve.current;
         return multiline`
-            ${this.constructor.name} {${next}
-            header: [${this.header}],${next}
-            data: [${entriesToStr(this.data, `,`, `${next}- `)}${next}],
-            ${base}}`;
+            ${this.constructor.name} {${current}
+            header: [${this.header}],${current}
+            data: [${entriesToStr(this.data, `,`, indentObj)}${current}],
+            ${previous}}`;
     }
 }
 
@@ -75,10 +87,11 @@ function arrayLengthToStr(arr) {
     return `${arr.constructor.name} { length: [${arr.length}] }`;
 }
 
-function objectToStr(obj, separator = `\n`, prefix = ``, suffix = `,`) {
+function objectToStr(obj, indent) {
+    const { current, previous } = indent.resolve;
     const entries = Object.entries(obj);
-    const str = entriesToStr(entries, separator, prefix, suffix);
-    return `${obj.constructor.name} {\n${str}\n}`;
+    const str = entriesToStr(entries, current, ``, `,`);
+    return `${obj.constructor.name} {${current}${str}${previous}}`;
 }
 
 function entriesToStr(entries, separator = `, `, prefix = ``, suffix = ``) {
