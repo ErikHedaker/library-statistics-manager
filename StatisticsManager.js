@@ -25,11 +25,11 @@ class StatisticsManager {
         const base = `\n`;
         const next = `\n` + ``.padEnd(2);
         return multiline`
-      ${this.constructor.name} {${next}
-      errands: [${arrayLengthToStr(this.errands)}]${next}
-      filtered: [${arrayLengthToStr(this.filtered)}]${next}
-      frequency: [${objectToStr(this.frequency, ``, next, `,`)}]
-      ${base}}`;
+            ${this.constructor.name} {${next}
+            errands: [${arrayLengthToStr(this.errands)}]${next}
+            filtered: [${arrayLengthToStr(this.filtered)}]${next}
+            frequency: [${objectToStr(this.frequency, ``, next, `,`)}]
+            ${base}}`;
     }
 }
 
@@ -43,10 +43,10 @@ class DataGroup {
         const base = `\n` + ``.padEnd(2);
         const next = `\n` + ``.padEnd(4);
         return multiline`
-      ${this.constructor.name} {${next}
-      header: [${this.header}],${next}
-      members: [${objectToStr(this.members, ``, next, `,`)}],
-      ${base}}`;
+            ${this.constructor.name} {${next}
+            header: [${this.header}],${next}
+            members: [${objectToStr(this.members, ``, next, `,`)}],
+            ${base}}`;
     }
 }
 
@@ -68,10 +68,10 @@ class DataMember {
         const base = `\n` + ``.padEnd(4);
         const next = `\n` + ``.padEnd(6);
         return multiline`
-      ${this.constructor.name} {${next}
-      header: [${this.header}],${next}
-      data: [${entriesToStr(this.data, `,`, `${next}- `)}${next}],
-      ${base}}`;
+            ${this.constructor.name} {${next}
+            header: [${this.header}],${next}
+            data: [${entriesToStr(this.data, `,`, `${next}- `)}${next}],
+            ${base}}`;
     }
 }
 

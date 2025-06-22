@@ -4,10 +4,9 @@ function onOpen(event) {
         input: spreadsheet.getSheetByName(`Ärende`),
         output: spreadsheet.getSheetByName(`Statistisk`),
     };
-    const errands = Errand.from(sheet.input);
-    const filtered = filterErrands(errands);
-    //const stats = getStatistics(filtered, errands.length);
-    const manager = new StatisticsManager(errands);
+    const manager = new StatisticsManager(
+        Errand.from(sheet.input)
+    );
     console.log(`onOpen start`);
     console.log(String(manager.frequency.primary));
     console.log(`onOpen -----`);
@@ -17,6 +16,4 @@ function onOpen(event) {
     console.log(`onOpen -----`);
     console.log(String(manager.frequency.primary.members.age));
     console.log(`onOpen stop`);
-    //sheetStatisticsReplace(sheetOutput, out);
-    //const data = new DataMember(`Sorted by person`, stats.primary.get(`person`));
 }
