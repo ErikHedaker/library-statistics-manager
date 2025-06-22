@@ -10,7 +10,7 @@
 class StatisticsManager {
     constructor(errands) {
         this.errands = errands;
-        this.filtered = filterErrands(this.errands);
+        this.filtered = this.errands.filter(Errand.filter);
         const freqFn = frequencyCountSorted.bind(null, this.filtered);
         this.frequency = {
             primary: new DataGroup(`Frequency count for primary visitor helped`, {
@@ -54,14 +54,6 @@ class DataMember {
     constructor(header, data) {
         this.header = header;
         this.data = data;
-    }
-
-    overwrite(topleft = `B2`) {
-        const data = [header, ``].concat(this.data);
-        const origin = sheet.getRange(topleft);
-        const target = sheet.getRange(origin.getRow(), origin.getCol(), data.length, 2);
-        target.setValues(data);
-        return target;
     }
 
     toString() {

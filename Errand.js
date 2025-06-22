@@ -33,8 +33,8 @@ class Errand {
             ${this.constructor.name} {\n
             rowNum[${this.rowNum}]\n
             visitors[${this.visitors}]\n
-            data[${this.data.entries().toArray()}]\n
-            }`;
+            data[${this.data.entries().toArray()}]
+            \n}`;
     }
 
     static from(sheet) {
@@ -45,6 +45,14 @@ class Errand {
             const zipped = headers.map((header, index) => [header, record[index]]);
             return new Errand(index, zipped);
         });
+    }
+
+    static filter(errand) {
+        const valid = errand.validate;
+        if (!valid) {
+            console.log(`Invalid datapoint: ${errand}`);
+        }
+        return valid && !excludeObject(errand.primary, [`person`, `age`], [`GLÖMT`, `-`]);
     }
 }
 
@@ -85,16 +93,6 @@ function normalizeArray(arr, linked) {
     return arr.concat(Array(
         Math.max(linked.length - arr.length, 0)
     ).fill(arr.at(-1)));
-}
-
-function filterErrands(errands) {
-    return errands.filter(errand => {
-        const valid = errand.validate;
-        if (!valid) {
-            console.log(`Invalid datapoint: ${errand}`);
-        }
-        return valid && !excludeObject(errand.primary, [`person`, `age`], [`GLÖMT`, `-`]);
-    });
 }
 
 function excludeObject(object, accessors, strings) {
