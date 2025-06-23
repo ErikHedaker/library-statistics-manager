@@ -12,7 +12,7 @@ class StatisticsManager {
         this.errands = errands;
         this.filtered = this.errands.filter(Errand.filter);
         this.indent = new Indentation().next();
-        const indentGroup = this.indent.next();
+        const indentGroup = this.indent.next().next();
         const indentMember = indentGroup.next().next();
         const freqFn = frequencyCountSorted.bind(null, this.filtered);
         this.frequency = {
@@ -36,10 +36,10 @@ class StatisticsManager {
     toString() {
         const { current, previous } = this.indent.resolve;
         return multiline`
-            ${this.constructor.name} {${current}
-            errands: [${arrayLengthToStr(this.errands)}]${current}
-            filtered: [${arrayLengthToStr(this.filtered)}]${current}
-            frequency: [${objectToStr(this.frequency, this.indent.next())}]
+            ${this.constructor.name} {
+            ${current}errands: [${arrayLengthToStr(this.errands)}],
+            ${current}filtered: [${arrayLengthToStr(this.filtered)}],
+            ${current}frequency: [${objectToStr(this.frequency, this.indent.next())}],
             ${previous}}`;
     }
 }
@@ -54,9 +54,9 @@ class DataGroup {
     toString() {
         const { current, previous } = this.indent.resolve;
         return multiline`
-            ${this.constructor.name} {${current}
-            header: [${this.header}],${current}
-            members: [${objectToStr(this.members, this.indent.next())}],
+            ${this.constructor.name} {
+            ${current}header: [${this.header}],
+            ${current}members: [${objectToStr(this.members, this.indent.next())}],
             ${previous}}`;
     }
 }
@@ -70,34 +70,14 @@ class DataMember {
 
     toString() {
         const { current, previous } = this.indent.resolve;
-        const indentObj = this.indent.next().resolve.current;
+        const indentProperty = this.indent.next().resolve.current;
         return multiline`
-            ${this.constructor.name} {${current}
-            header: [${this.header}],${current}
-            data: [${entriesToStr(this.data, `,`, indentObj)}${current}],
+            ${this.constructor.name} {
+            ${current}header: [${this.header}],
+            ${current}data: [${entriesToStr(this.data, indentProperty)}
+            ${current}],
             ${previous}}`;
     }
-}
-
-function multiline({ raw }, ...args) {
-    return String.raw({ raw: raw.map(str => str.replace(/\n\s*/g, ``).replace(/\\n/g, `\n`)) }, ...args);
-}
-
-function arrayLengthToStr(arr) {
-    return `${arr.constructor.name} { length: [${arr.length}] }`;
-}
-
-function objectToStr(obj, indent) {
-    const { current, previous } = indent.resolve;
-    const entries = Object.entries(obj);
-    const str = entriesToStr(entries, current, ``, `,`);
-    return `${obj.constructor.name} {${current}${str}${previous}}`;
-}
-
-function entriesToStr(entries, separator = `, `, prefix = ``, suffix = ``) {
-    return entries.map(
-        ([key, value]) => `${prefix}${key}: [${String(value)}]${suffix}`
-    ).join(separator);
 }
 
 function frequencyCountSorted(array, transform) {

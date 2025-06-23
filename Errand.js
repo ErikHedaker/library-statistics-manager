@@ -30,18 +30,17 @@ class Errand {
 
     toString() {
         return multiline`
-            ${this.constructor.name} {\n
-            rowNum[${this.rowNum}]\n
-            visitors[${this.visitors}]\n
-            data[${this.data.entries().toArray()}]
-            \n}`;
+            ${this.constructor.name} {
+            rowNum[${this.rowNum}],
+            visitors[${this.visitors}],
+            data[${this.data.entries().toArray()}] }`;
     }
 
     static from(sheet) {
         const [headers, ...records] = sheet.getDataRange().getValues();
-        return records.map((record, index) => {
+        return records.map((record, rowNum) => {
             const zipped = headers.map((header, index) => [header, record[index]]);
-            return new Errand(index, zipped);
+            return new Errand(rowNum, zipped);
         });
     }
 
@@ -101,8 +100,4 @@ function excludeObject(object, accessors, strings) {
 
 function identifyErrand(errand) {
     return `${errand.constructor.name} { rowSheet: [${errand.rowSheet}], date: [${errand.date}] }`;
-}
-
-function dataType(arg) {
-    return Boolean(arg) && typeof arg === `object` ? Object.prototype.toString.call(arg).slice(8, -1) : typeof arg;
 }
