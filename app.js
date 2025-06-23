@@ -5,5 +5,5 @@ function onOpen(event) {
         output: spreadsheet.getSheetByName(`Statistisk`),
     };
     const manager = new StatisticsManager(Errand.from(sheet.input));
-    console.log(String(manager.frequency.primary));
+    console.log(String(manager));
 }

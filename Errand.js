@@ -38,9 +38,7 @@ class Errand {
     }
 
     static from(sheet) {
-        const [headers, ...records] = sheet.getRange(
-            1, 1, sheet.getLastRow(), sheet.getLastColumn()
-        ).getValues();
+        const [headers, ...records] = sheet.getDataRange().getValues();
         return records.map((record, index) => {
             const zipped = headers.map((header, index) => [header, record[index]]);
             return new Errand(index, zipped);

@@ -11,10 +11,10 @@ class StatisticsManager {
     constructor(errands) {
         this.errands = errands;
         this.filtered = this.errands.filter(Errand.filter);
-        const freqFn = frequencyCountSorted.bind(null, this.filtered);
-        this.indent = new Indentation();
+        this.indent = new Indentation().next();
         const indentGroup = this.indent.next();
         const indentMember = indentGroup.next().next();
+        const freqFn = frequencyCountSorted.bind(null, this.filtered);
         this.frequency = {
             primary: new DataGroup(`Frequency count for primary visitor helped`, {
                 combined: new DataMember(
