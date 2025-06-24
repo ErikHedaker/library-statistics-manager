@@ -31,9 +31,9 @@ class Errand {
     toString() {
         return multiline`
             ${this.constructor.name} {
-            rowNum[${this.rowNum}],
-            visitors[${this.visitors}],
-            data[${this.data.entries().toArray()}] }`;
+            ${` `}rowNum[${this.rowNum}],
+            ${` `}visitors[${this.visitors}],
+            ${` `}data[${this.data.entries().toArray()}] }`;
     }
 
     static from(sheet) {

@@ -12,24 +12,24 @@ class StatisticsManager {
         this.errands = errands;
         this.filtered = this.errands.filter(Errand.filter);
         this.indent = new Indentation().next();
-        const indentGroup = this.indent.next().next();
-        const indentMember = indentGroup.next().next();
+        const indentDataGroup = this.indent.next().next();
+        const indentDataMember = indentDataGroup.next().next();
         const freqFn = frequencyCountSorted.bind(null, this.filtered);
         this.frequency = {
             primary: new DataGroup(`Frequency count for primary visitor helped`, {
                 combined: new DataMember(
                     `Sorted by person & age`,
                     freqFn(errand => String(errand.primary)),
-                    indentMember),
+                    indentDataMember),
                 person: new DataMember(
                     `Sorted by person`,
                     freqFn(errand => errand.primary.person),
-                    indentMember),
+                    indentDataMember),
                 age: new DataMember(
                     `Sorted by age`,
                     freqFn(errand => errand.primary.age),
-                    indentMember),
-            }, indentGroup),
+                    indentDataMember),
+            }, indentDataGroup),
         };
     }
 
