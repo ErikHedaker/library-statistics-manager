@@ -5,27 +5,27 @@ class Errand {
         this.visitors = Visitor.from(
             this.data.get(`Hjälpte`),
             this.data.get(`Åldersgrupp`),
-        );
+        ) ?? [];
     }
 
     get primary() {
-        return this.visitors?.[0];
+        return this.visitors[0];
     }
 
     get companions() {
-        return this.visitors?.length > 1 ? this.visitors.slice(1) : null; // : [];
+        return this.visitors.slice(1);
     }
 
-    get validate() {
-        return true;
-    }
-
-    get validateOLD() {
-        return this.date instanceof Date &&
-            this.visitors instanceof Array && this.visitors.length > 0 &&
-            Boolean(this.location) &&
-            Boolean(this.difficulty) &&
-            Boolean(this.category);
+    isValid() {
+        return(
+          Number.isInteger(this.rowNum) &&
+          this.data instanceof Map &&
+          this.data.size > 5 &&
+          this.data.values().take(6).every(Boolean) &&
+          this.visitors instanceof Array &&
+          this.visitors.length > 0 &&
+          this.visitors.every(visitor => visitor.isValid())
+        );
     }
 
     toString() {
@@ -51,12 +51,27 @@ class Errand {
         }
         return valid && !excludeObject(errand.primary, [`person`, `age`], [`GLÖMT`, `-`]);
     }
+
+    static validator(errands) {
+        const valid = [];
+        const invalid = [];
+        const excludeList = [`GLÖMT`, `-`];
+        const validValue = value => !excludeList.includes(value);
+        const validVisitors = visitors => visitors.flatMap(Object.values).every(validValue);
+        const validate = errand => errand.isValid && validVisitors(errand.visitors);
+        errands.forEach(errand => (validate(errand) ? valid : invalid).push(errand));
+        return [valid, invalid];
+    }
 }
 
 class Visitor {
     constructor(person, age) {
         this.person = person;
         this.age = age;
+    }
+
+    isValid() {
+        return Object.values(this).every(Boolean);
     }
 
     toString() {
@@ -72,8 +87,8 @@ class Visitor {
             const normalizePerson = normalizeArray(arrayPerson, arrayAge).map(substitutesCallback);
             const normalizeAge = normalizeArray(arrayAge, arrayPerson);
             return normalizePerson.map((person, index) => new Visitor(person, normalizeAge[index]));
-        } catch (failure) {
-            return (console.log(`${createVisitors.name} caught exception:`, failure), null);
+        } catch (error) {
+            return (console.log(`Visitor.from caught exception:`, error), null);
         }
     }
 }
@@ -96,8 +111,4 @@ function excludeObject(object, accessors, strings) {
     return strings.some(
         str => accessors.some(accessor => object[accessor] === str)
     );
-}
-
-function identifyErrand(errand) {
-    return `${errand.constructor.name} { rowSheet: [${errand.rowSheet}], date: [${errand.date}] }`;
 }

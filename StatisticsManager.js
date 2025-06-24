@@ -1,20 +1,10 @@
-/*
-  [`Scalar data`, new Map([
-      [`Total errands recorded before filtering`, stats.overview.totalRaw],
-      [`Total errands recorded after filtering`, stats.overview.totalFilter],
-      [`First errand`, identifyErrand(stats.overview.first)],
-      [`Last errand`, identifyErrand(stats.overview.last)],
-  ])],
-*/
-
 class StatisticsManager {
     constructor(errands) {
-        this.errands = errands;
-        this.filtered = this.errands.filter(Errand.filter);
-        this.indent = new Indentation().next();
+        [this.valid, this.invalid] = Errand.validator(errands);
+        const freqFn = frequencyCountSorted.bind(null, this.valid);
+        this.indent = new Indentation().next(); 
         const indentDataGroup = this.indent.next().next();
         const indentDataMember = indentDataGroup.next().next();
-        const freqFn = frequencyCountSorted.bind(null, this.filtered);
         this.frequency = {
             primary: new DataGroup(`Frequency count for primary visitor helped`, {
                 combined: new DataMember(
@@ -37,8 +27,8 @@ class StatisticsManager {
         const { current, previous } = this.indent.resolve;
         return multiline`
             ${this.constructor.name} {
-            ${current}errands: [${arrayLengthToStr(this.errands)}],
-            ${current}filtered: [${arrayLengthToStr(this.filtered)}],
+            ${current}valid: [${arrayLengthToStr(this.valid)}],
+            ${current}invalid: [${arrayLengthToStr(this.invalid)}],
             ${current}frequency: [${objectToStr(this.frequency, this.indent.next())}],
             ${previous}}`;
     }
@@ -89,3 +79,12 @@ function frequencyCountSorted(array, transform) {
 function sheetStatisticsReplace(sheet, str) {
     sheet.getRange(`B2`).setValue(str);
 }
+
+/*
+  [`Scalar data`, new Map([
+      [`Total errands recorded before filtering`, stats.overview.totalRaw],
+      [`Total errands recorded after filtering`, stats.overview.totalFilter],
+      [`First errand`, identifyErrand(stats.overview.first)],
+      [`Last errand`, identifyErrand(stats.overview.last)],
+  ])],
+*/
