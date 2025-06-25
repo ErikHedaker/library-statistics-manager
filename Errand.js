@@ -44,14 +44,6 @@ class Errand {
         });
     }
 
-    static filter(errand) {
-        const valid = errand.validate;
-        if (!valid) {
-            console.log(`Invalid datapoint: ${errand}`);
-        }
-        return valid && !excludeObject(errand.primary, [`person`, `age`], [`GLÖMT`, `-`]);
-    }
-
     static validator(errands) {
         const valid = [];
         const invalid = [];
