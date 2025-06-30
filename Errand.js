@@ -17,14 +17,14 @@ class Errand {
     }
 
     isValid() {
-        return(
-          Number.isInteger(this.rowNum) &&
-          this.data instanceof Map &&
-          this.data.size > 5 &&
-          this.data.values().take(6).every(Boolean) &&
-          this.visitors instanceof Array &&
-          this.visitors.length > 0 &&
-          this.visitors.every(visitor => visitor.isValid())
+        return (
+            Number.isInteger(this.rowNum) &&
+            this.data instanceof Map &&
+            this.data.size > 5 &&
+            this.data.values().take(6).every(Boolean) &&
+            this.visitors instanceof Array &&
+            this.visitors.length > 0 &&
+            this.visitors.every(visitor => visitor.isValid())
         );
     }
 
@@ -63,7 +63,7 @@ class Visitor {
     }
 
     isValid() {
-        return Object.values(this).every(Boolean);
+        return Boolean(this.person) && Boolean(this.person);
     }
 
     toString() {
