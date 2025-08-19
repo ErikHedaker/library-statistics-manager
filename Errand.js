@@ -1,10 +1,15 @@
 class Errand {
-    constructor(rowNum, data) {
-        this.rowNum = rowNum;
-        this.data = new Map(data);
+    constructor(indent, row, entries) {
+        const dict = new Map(entries);
+        this.indent = indent;
+        this.row = row;
+        this.date = new Date(dict.get(`Datum`));
+        this.location = dict.get(`Plats`);
+        this.difficulty = dict.get(`Svårighet`);
+        this.tags = dict.get(`Taggar`).split(`, `);
         this.visitors = Visitor.from(
-            this.data.get(`Hjälpte`),
-            this.data.get(`Åldersgrupp`),
+            dict.get(`Person`),
+            dict.get(`Åldersgrupp`),
         ) ?? [];
     }
 
@@ -18,10 +23,8 @@ class Errand {
 
     isValid() {
         return (
-            Number.isInteger(this.rowNum) &&
-            this.data instanceof Map &&
-            this.data.size > 5 &&
-            this.data.values().take(6).every(Boolean) &&
+            Object.values(this).every(value => value != null) &&
+            Number.isInteger(this.row) && // index or actual sheet row number?
             this.visitors instanceof Array &&
             this.visitors.length > 0 &&
             this.visitors.every(visitor => visitor.isValid())
@@ -29,18 +32,20 @@ class Errand {
     }
 
     toString() {
+        const { current, previous } = this.indent.resolve;
+        const propertiesStr = entriesToStr(Object.entries(this), current);
         return multiline`
             ${this.constructor.name} {
-            ${` `}rowNum[${this.rowNum}],
-            ${` `}visitors[${this.visitors}],
-            ${` `}data[${this.data.entries().toArray()}] }`;
+            ${propertiesStr}
+            ${previous}}`;
     }
 
     static from(sheet) {
-        const [headers, ...records] = sheet.getDataRange().getValues();
-        return records.map((record, rowNum) => {
-            const zipped = headers.map((header, index) => [header, record[index]]);
-            return new Errand(rowNum, zipped);
+        const indent = new Indentation().next();
+        const [headers, ...datapoints] = sheet.getDataRange().getValues();
+        return datapoints.map((data, indexData) => {
+            const entries = headers.map((header, indexHeader) => [header, data[indexHeader]]);
+            return new Errand(indent, indexData + 2, entries);
         });
     }
 
@@ -54,53 +59,4 @@ class Errand {
         errands.forEach(errand => (validate(errand) ? valid : invalid).push(errand));
         return [valid, invalid];
     }
-}
-
-class Visitor {
-    constructor(person, age) {
-        this.person = person;
-        this.age = age;
-    }
-
-    isValid() {
-        return Boolean(this.person) && Boolean(this.person);
-    }
-
-    toString() {
-        const str = entriesToStr(Object.entries(this));
-        return `${this.constructor.name} { ${str} }`;
-    }
-
-    static from(strPerson, strAge) {
-        try {
-            //console.log(`strPerson[${strPerson}], strAge[${strAge}]`);
-            const arrayPerson = customStrToArray(strPerson);
-            const arrayAge = customStrToArray(strAge);
-            const normalizePerson = normalizeArray(arrayPerson, arrayAge).map(substitutesCallback);
-            const normalizeAge = normalizeArray(arrayAge, arrayPerson);
-            return normalizePerson.map((person, index) => new Visitor(person, normalizeAge[index]));
-        } catch (error) {
-            return (console.log(`Visitor.from caught exception:`, error), null);
-        }
-    }
-}
-
-function customStrToArray(str) {
-    if (!str?.length) throw { fn: customStrToArray.name, str };
-    return str.split(`, `).flatMap(str => (match => // item
-        !match ? [str] : Array(match.groups.num).fill(match.groups.target)
-    )(str.match(/(?<target>[åäö\w\s]+?)\sx(?<num>\d+)/)));
-}
-
-function normalizeArray(arr, linked) {
-    if (!arr?.length) throw { fn: normalizeArray.name, arr, linked };
-    return arr.concat(Array(
-        Math.max(linked.length - arr.length, 0)
-    ).fill(arr.at(-1)));
-}
-
-function excludeObject(object, accessors, strings) {
-    return strings.some(
-        str => accessors.some(accessor => object[accessor] === str)
-    );
 }
