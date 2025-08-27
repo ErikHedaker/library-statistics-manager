@@ -24,7 +24,8 @@ class Errand {
     isValid() {
         return (
             Object.values(this).every(value => value != null) &&
-            Number.isInteger(this.row) && // index or actual sheet row number?
+            Number.isInteger(this.row) &&
+            this.row > 0 &&
             this.visitors instanceof Array &&
             this.visitors.length > 0 &&
             this.visitors.every(visitor => visitor.isValid())
@@ -40,9 +41,8 @@ class Errand {
             ${previous}}`;
     }
 
-    static from(sheet) {
+    static fromData([headers, ...datapoints]) {
         const indent = new Indentation().next();
-        const [headers, ...datapoints] = sheet.getDataRange().getValues();
         return datapoints.map((data, indexData) => {
             const entries = headers.map((header, indexHeader) => [header, data[indexHeader]]);
             return new Errand(indent, indexData + 2, entries);

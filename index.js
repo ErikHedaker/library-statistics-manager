@@ -1,29 +1,38 @@
 function onOpen(event) {
-    const sheet = {
-        input: event.source.getSheetByName(`Ärende`),
-        output: event.source.getSheetByName(`Statistik`),
-    };
-    const manager = new StatisticsManager(Errand.from(sheet.input)); // .getDataRange().getValues()
+    const data = event.source.getSheetByName(`Ärende`).getDataRange().getValues();
+    const destination = event.source.getSheetByName(`Statistik`);
+    const first = new Vector(3, 2);
+    const errands = Errand.fromData(data);
+    const manager = new StatisticsManager(errands);
     const { grid, funcs } = manager.getContext();
-    const position = [2, 2];
-    console.log(GridUtility.info(grid).str);
-    insertGrid(sheet.output, grid, ...position);
-    insertBorders(sheet.output, funcs, ...position);
+    const info = GridUtils.info(grid).str;
+    console.log(info);
+    insertGrid(destination, first, grid);
+    insertBorders(destination, first, funcs);
+    debuggingIdentifier(destination);
 }
 
-function insertGrid(sheet, grid, row, col) {
-    const height = grid.length;
-    const width = grid[0].length;
-    const range = sheet.getRange(row, col, height, width);
+function insertGrid(sheet, first, grid) {
+    const size = Vector.sizeGrid(grid);
+    const frame = new Frame(first, size);
+    const range = frame.toRange(sheet);
     sheet.clearFormats();
     sheet.getDataRange().clear();
     range.setValues(grid);
 }
 
-function insertBorders(sheet, funcs, row, col) {
-    funcs.forEach(callback => insertBorder(sheet, ...callback(row, col)));
+function insertBorders(sheet, first, funcs) {
+    const setBorder = (range) => range.setBorder(true, true, true, true, null, null)
+    const toRange = pipe(
+        invokeFunc(first),
+        Frame.verify,
+        (frame) => frame.toRange(sheet),
+    )
+    funcs.map(toRange).forEach(setBorder);
 }
 
-function insertBorder(sheet, row, col, height, width) {
-    sheet.getRange(row, col, height, width).setBorder(true, true, true, true, null, null);
+function debuggingIdentifier(sheet) {
+    const str = persistent.debuggingStr();
+    sheet.getRange(1, 1).setValue(str);
+    console.log(str);
 }

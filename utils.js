@@ -88,7 +88,7 @@ function isObj(arg) {
 
 function curry(fn) {
     const curried = (...args) => (args.length >= fn.length ? fn(...args) : (...next) => curried(...args, ...next));
-    return curried; 
+    return curried;
 }
 
 function partial(fn, ...bound) {

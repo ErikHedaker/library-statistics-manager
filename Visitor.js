@@ -34,9 +34,8 @@ class Visitor {
 
     static duplicatorArray(strRaw, delim = `, `) {
         return strRaw.split(delim).flatMap(str => {
-            const duplicator = match => !match ? [str] : Array(match.groups.num).fill(match.groups.target);
             const result = str.match(/(?<target>[åäö\w\s]+?)\sx(?<num>\d+)/);
-            return duplicator(result);
+            return !result ? [str] : Array(result.groups.num).fill(result.groups.target);
         });
     }
 
