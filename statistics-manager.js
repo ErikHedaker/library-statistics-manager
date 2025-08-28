@@ -8,8 +8,8 @@ function joinContextGrids(contexts, spacers = GridUtils.spacers()) {
 function createContext(grid, relativeBorders = [], selfBorders = null) {
     const size = Vector.gridSize(grid);
     const selfBordersWithDefault = selfBorders ?? [
-        (first) => new Frame(Vector.verify(first), new Vector(1, size.col)),
-        (first) => new Frame(Vector.verify(first), size),
+        (first) => new VectorBounds(Vector.verify(first), new Vector(1, size.col)),
+        (first) => new VectorBounds(Vector.verify(first), size),
     ];
     return { grid, funcs: selfBordersWithDefault.concat(relativeBorders) };
 }

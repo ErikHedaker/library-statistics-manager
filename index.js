@@ -14,7 +14,7 @@ function onOpen(event) {
 
 function insertGrid(sheet, first, grid) {
     const size = Vector.gridSize(grid);
-    const frame = new Frame(first, size);
+    const frame = new VectorBounds(first, size);
     const range = frame.toRange(sheet);
     sheet.clearFormats();
     sheet.getDataRange().clear();
@@ -25,7 +25,7 @@ function insertBorders(sheet, first, funcs) {
     const setBorder = (range) => range.setBorder(true, true, true, true, null, null)
     const toRange = pipe(
         invokeFunc(first),
-        Frame.verify,
+        VectorBounds.verify,
         (frame) => frame.toRange(sheet),
     )
     funcs.map(toRange).forEach(setBorder);
