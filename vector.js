@@ -12,15 +12,8 @@ class Vector {
         return this._col;
     }
 
-    toArray() {
-        return [this.row, this.col];
-    }
-
     clone() {
-        return new Vector(
-            this.row,
-            this.col,
-        );
+        return new Vector(this.row, this.col);
     }
 
     add(arg) {
@@ -31,29 +24,11 @@ class Vector {
         );
     }
 
-    toString() {
-        return `${this.constructor.name} { row: [${this.row}], col: [${this.col}] }`;
-    }
-
     static verify(value) {
         if (!(value instanceof Vector)) {
             throw `value is not instance of class Vector`;
         }
         return value;
-    }
-
-    static calcFirst(size, last) {
-        return new Vector(
-            (last.row - size.row) + 1,
-            (last.col - size.col) + 1,
-        );
-    }
-
-    static calcLast(first, size) {
-        return new Vector(
-            (first.row + size.row) - 1,
-            (first.col + size.col) - 1,
-        );
     }
 
     static calcSize(first, last) {
@@ -63,7 +38,7 @@ class Vector {
         );
     }
 
-    static sizeGrid(grid) {
+    static gridSize(grid) {
         const { height, width } = GridUtils.info(grid);
         return new Vector(height, width);
     }

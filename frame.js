@@ -12,19 +12,11 @@ class Frame {
         return this._size;
     }
 
-    get last() {
-        return Vector.calcLast(this.first, this.last);
-    }
-
     clone() {
         return new Frame(
             this.first.clone(),
             this.size.clone(),
         );
-    }
-
-    toString() {
-        return `${this.constructor.name} { first: [${this.first}], size: [${this.size}] }`;
     }
 
     toRange(sheet) {
@@ -53,6 +45,6 @@ class Frame {
         if (!(value instanceof Frame)) {
             throw `argument is not instance of class Frame`;
         }
-        return value.clone();
+        return value;
     }
 }

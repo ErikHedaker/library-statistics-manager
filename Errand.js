@@ -1,7 +1,50 @@
+class Visitor {
+    constructor(person, age) {
+        this.person = person;
+        this.age = age;
+    }
+
+    isValid() {
+        return Object.values(this).every(Boolean);
+    }
+
+    static from(personFull, ageFull) {
+        try {
+            const array = {
+                person: Visitor.duplicatorArray(personFull),
+                age: Visitor.duplicatorArray(ageFull),
+            };
+            const normalized = {
+                person: Visitor.normalizeArray(array.person, array.age).map(substitutesCallback),
+                age: Visitor.normalizeArray(array.age, array.person),
+            };
+            return normalized.person.map(
+                (person, index) => new Visitor(person, normalized.age[index])
+            );
+        } catch (error) {
+            console.log(`Exception in Visitor.from:`, error)
+            return null;
+        }
+    }
+
+    static duplicatorArray(strRaw, delim = `, `) {
+        return strRaw.split(delim).flatMap(str => {
+            const result = str.match(/(?<target>[åäö\w\s]+?)\sx(?<num>\d+)/);
+            return !result ? [str] : Array(result.groups.num).fill(result.groups.target);
+        });
+    }
+
+    static normalizeArray(arr, target) {
+        const back = arr.at(-1);
+        const add = Math.max(target.length - arr.length, 0);
+        const append = Array(add).fill(back);
+        return arr.concat(append);
+    }
+}
+
 class Errand {
-    constructor(indent, row, entries) {
+    constructor(entries, row) {
         const dict = new Map(entries);
-        this.indent = indent;
         this.row = row;
         this.date = new Date(dict.get(`Datum`));
         this.location = dict.get(`Plats`);
@@ -32,20 +75,10 @@ class Errand {
         );
     }
 
-    toString() {
-        const { current, previous } = this.indent.resolve;
-        const propertiesStr = entriesToStr(Object.entries(this), current);
-        return multiline`
-            ${this.constructor.name} {
-            ${propertiesStr}
-            ${previous}}`;
-    }
-
     static fromData([headers, ...datapoints]) {
-        const indent = new Indentation().next();
         return datapoints.map((data, indexData) => {
             const entries = headers.map((header, indexHeader) => [header, data[indexHeader]]);
-            return new Errand(indent, indexData + 2, entries);
+            return new Errand(entries, indexData + 2);
         });
     }
 
@@ -57,6 +90,14 @@ class Errand {
         const validVisitors = visitors => visitors.flatMap(Object.values).every(validValue);
         const validate = errand => errand.isValid && validVisitors(errand.visitors);
         errands.forEach(errand => (validate(errand) ? valid : invalid).push(errand));
-        return [valid, invalid];
+        return { valid, invalid };
     }
 }
+
+/*
+function excludeObject(object, accessors, strings) {
+    return strings.some(
+        str => accessors.some(accessor => object[accessor] === str)
+    );
+}
+*/

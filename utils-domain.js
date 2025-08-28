@@ -1,71 +1,13 @@
 // ====================
-//             Assorted
-// ====================
-function joinContextGrids(contexts, spacers = GridUtils.spacers()) {
-    const joined = contexts.map(context => context.grid).reduce(
-        (acc, grid) => acc.concat(spacers).concat(grid)
-    );
-    return GridUtils.normalize(joined);
-}
-function createContext(grid, relativeBorders = [], selfBorders = null) {
-    const size = Vector.sizeGrid(grid);
-    const selfBordersWithDefault = selfBorders ?? [
-        (first) => new Frame(Vector.verify(first), new Vector(1, size.col)),
-        (first) => new Frame(Vector.verify(first), size),
-    ];
-    return { grid, funcs: selfBordersWithDefault.concat(relativeBorders) };
-}
-function createRelativeBorders(contexts, offsetter, initial = new Vector(0, 0)) {
-    return contexts.reduce(({ bound, offset }, { grid, funcs }) => {
-        const offsetVerified = Vector.verify(offset)
-        const offsetFuncBind = func => (first) => func(offsetVerified.add(Vector.verify(first)));
-        const offsetFuncs = funcs.map(offsetFuncBind);
-        const size = Vector.sizeGrid(grid);
-        return {
-            bound: bound.concat(offsetFuncs),
-            offset: offsetter(size).add(offsetVerified),
-        };
-    }, { bound: [], offset: Vector.verify(initial) }).bound;
-}
-
-// ====================
-//                Class
-// ====================
-class Indentation {
-    constructor(steps = [`\n`]) {
-        this.steps = steps;
-    }
-
-    get resolve() {
-        return {
-            current: this.steps.join(``),
-            previous: this.steps.slice(0, -1).join(``),
-        };
-    }
-
-    next(options) {
-        return new Indentation(
-            this.steps.concat(Indentation.step(options))
-        );
-    }
-
-    toString() {
-        return `${this.constructor.name} { steps.length: [${this.steps.length}] }`;
-    }
-    
-    static step({ base = `|`, fill = ` `, size = 2 } = {}) {
-        return base.padEnd(size, fill);
-    }
-}
-
-// ====================
 //          Mutable var
 // ====================
+
 const persistent = new (class {
     constructor() {
         this.service = PropertiesService.getScriptProperties();
         this.key = SpreadsheetApp.getActiveSpreadsheet().getName();
     }
+
     retrieve() {
         try {
             const str = this.service.getProperty(this.key);
@@ -75,12 +17,14 @@ const persistent = new (class {
             return {};
         }
     }
+
     replace(value) {
         if (isObj(value)) {
             const str = JSON.stringify(value);
             this.service.setProperty(this.key, str);
         }
     }
+
     debuggingStr() {
         const date = new Date().toISOString();
         const storage = this.retrieve();
@@ -93,47 +37,180 @@ const persistent = new (class {
 })();
 
 
+
 // ====================
-//         Constant var
+//             Constant
 // ====================
+
 const orderDate = {
     days: [`Sunday`, `Monday`, `Tuesday`, `Wednesday`, `Thursday`, `Friday`, `Saturday`],
     months: [`January`, `February`, `March`, `April`, `May`, `June`, `July`, `August`, `September`, `October`, `November`, `December`],
 };
-const indentDefault = new Indentation().next();
+
 
 
 // ====================
 //               String
 // ====================
+
 function indexToStrDay(index) {
     return orderDate.days[index];
 }
+
 function indexToStrMonth(index) {
     return orderDate.months[index];
 }
-function arrLastToStr(arr, indent = indentDefault) {
-    const { current, previous } = indent.resolve;
-    return multiline`
-        ${arr.constructor.name} {
-        ${current}last: [${arr.at(-1)}],
-        ${previous}}`;
+
+function arrLastToStr(arr) {
+    return `${arr.constructor.name} { last: [${arr.at(-1)}] }`;
 }
-function valueToStr(value, indent = indentDefault) {
+
+function valueToStr(value) {
     const isArr = (x) => Array.isArray(x) && x.length > 0;
-    const fn = isObj(value) ? (isArr(value) ? arrLastToStr : objectToStr) : String;
-    return fn(value, indent);
+    const toStr = isObj(value) ? (isArr(value) ? arrLastToStr : objectToStr) : String;
+    return toStr(value);
 }
-function objectToStr(obj, indent = indentDefault) {
-    const { current, previous } = indent.resolve;
+
+function objectToStr(obj) {
     const entries = Object.entries(obj);
-    const str = entriesToStr(entries, current, `,`, ``);
-    return `${obj.constructor.name} {${str}${previous}}`;
+    const str = entriesToStr(entries);
+    return `${obj.constructor.name} { ${str} }`;
 }
+
 function rangeToStr(range) {
     return multiline`\n
         first.row: [${range.getRow()}]\n
         first.col: [${range.getColumn()}]\n
         last.row:  [${range.getLastRow()}]\n
         last.col:  [${range.getLastColumn()}]\n`;
+}
+
+
+
+// ====================
+//             2D Array
+// ====================
+
+class GridUtils {
+    static debug(grid) {
+        const formatStr = str => `"${str}"`;
+        const formatRow = row => `(${row.length})<${row.map(formatStr).join(`;`)}>`;
+        const formatted = grid.map(formatRow);
+        console.log(formatted);
+    }
+
+    static sub() {
+        return ``;
+    }
+
+    static spacing() {
+        return 1;
+    }
+
+    static spacers() {
+        return Array(GridUtils.spacing()).fill([``]);
+    }
+
+    static getMaxWidth(grid) {
+        //return grid.map(row => row.length).reduce(Math.max, 0);
+        //return grid.reduce((accum, { length }) => Math.max(accum, length), 0);
+        return grid.reduce((max, { length }) => max > length ? max : length, 0);
+    }
+
+    static getMinWidth(grid) {
+        return grid.reduce((min, { length }) => min < length ? min : length, Infinity);
+    }
+
+    static getHeight(grid) {
+        const height = grid.length;
+        return height === 1 ? (grid[0].length === 0 ? 0 : 1) : height;
+    }
+
+    static info(grid) {
+        const height = GridUtils.getHeight(grid);
+        const width = GridUtils.getMaxWidth(grid);
+        const check = GridUtils.getMinWidth(grid);
+        const uniform = width === check;
+        return {
+            width,
+            height,
+            uniform,
+            str: `Grid: { width: [${width}], height: [${height}], uniform [${uniform}] }`,
+        }
+    }
+
+    static normalize(grid) {
+        return GridUtils.info(grid).uniform ? grid : GridUtils.padRight(grid, 0);
+    }
+
+    static concat(gridLeft, gridRight, indexLeft = 0) {
+        const gridLeftPadding = Math.max(indexLeft + gridRight.length - gridLeft.length, 0);
+        const gridLeftPadded = GridUtils.padDown(gridLeft, gridLeftPadding);
+        const above = gridLeftPadded.slice(0, indexLeft);
+        const below = gridLeftPadded.slice(indexLeft).map(
+            (row, index) => row.concat(gridRight[index] ?? []) // nullish filler row
+        );
+        const joined = above.concat(below);
+        return GridUtils.normalize(joined);
+    }
+
+    static subArray(width, sub = GridUtils.sub()) {
+        return Array(Math.max(width, 0)).fill(sub);
+    }
+
+    static subGrid(height, width, sub = GridUtils.sub()) {
+        return Array(Math.max(height, 0)).fill(GridUtils.subArray(width, sub));
+    }
+
+    static padRightExact(grid, width, sub = GridUtils.sub()) {
+        return grid.map(row => row.concat(GridUtils.subArray(width - row.length, sub)));
+    }
+
+    static padLeftExact(grid, width, sub = GridUtils.sub()) {
+        return grid.map(row => GridUtils.subArray(width - row.length, sub).concat(row));
+    }
+
+    static padDownExact(grid, height, sub = GridUtils.sub()) {
+        return grid.concat(GridUtils.subGrid(height - grid.length, GridUtils.getMaxWidth(grid), sub));
+    }
+
+    static padUpExact(grid, height, sub = GridUtils.sub()) {
+        return GridUtils.subGrid(height - grid.length, GridUtils.getMaxWidth(grid), sub).concat(grid);
+    }
+
+    static padRight(grid, add = GridUtils.spacing(), sub = GridUtils.sub()) {
+        return GridUtils.padRightExact(grid, add + GridUtils.getMaxWidth(grid), sub);
+    }
+
+    static padLeft(grid, add = GridUtils.spacing(), sub = GridUtils.sub()) {
+        return GridUtils.padLeftExact(grid, add + GridUtils.getMaxWidth(grid), sub);
+    }
+    
+    static padDown(grid, add = GridUtils.spacing(), sub = GridUtils.sub()) {
+        return GridUtils.padDownExact(grid, add + grid.length, sub);
+    }
+
+    static padUp(grid, add = GridUtils.spacing(), sub = GridUtils.sub()) {
+        return GridUtils.padUpExact(grid, add + grid.length, sub);
+    }
+    
+    static createdGridPadded(grid, header) {
+        const gridWithPadding = GridUtils.padSides(grid);
+        return GridUtils.addHeader(gridWithPadding, header);
+    }
+
+    static addHeader(grid, header) {
+        const gridWithHeader = [[header]].concat(grid);
+        return GridUtils.normalize(gridWithHeader);
+    }
+
+    static padSides(grid, add = GridUtils.spacing(), sub = GridUtils.sub()) {
+        const padder = pipe(
+            partialRight(GridUtils.padRight, add, sub),
+            partialRight(GridUtils.padDown,  add, sub),
+            partialRight(GridUtils.padLeft,  add, sub),
+            partialRight(GridUtils.padUp,    add, sub),
+        );
+        return padder(grid);
+    }
 }

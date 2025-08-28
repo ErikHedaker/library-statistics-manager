@@ -1,21 +1,76 @@
+function joinContextGrids(contexts, spacers = GridUtils.spacers()) {
+    const joined = contexts.map(context => context.grid).reduce(
+        (acc, grid) => acc.concat(spacers).concat(grid)
+    );
+    return GridUtils.normalize(joined);
+}
+
+function createContext(grid, relativeBorders = [], selfBorders = null) {
+    const size = Vector.gridSize(grid);
+    const selfBordersWithDefault = selfBorders ?? [
+        (first) => new Frame(Vector.verify(first), new Vector(1, size.col)),
+        (first) => new Frame(Vector.verify(first), size),
+    ];
+    return { grid, funcs: selfBordersWithDefault.concat(relativeBorders) };
+}
+
+function createRelativeBorders(contexts, offsetter, initial = new Vector(0, 0)) {
+    return contexts.reduce(({ bound, offset }, { grid, funcs }) => {
+        const offsetVerified = Vector.verify(offset)
+        const offsetFuncBind = func => (first) => func(offsetVerified.add(Vector.verify(first)));
+        const offsetFuncs = funcs.map(offsetFuncBind);
+        const size = Vector.gridSize(grid);
+        return {
+            bound: bound.concat(offsetFuncs),
+            offset: offsetter(size).add(offsetVerified),
+        };
+    }, { bound: [], offset: Vector.verify(initial) }).bound;
+}
+
+class StatEntries {
+    constructor(header, grid) {
+        this.header = header;
+        this.grid = grid;
+    }
+    
+    getContext() {
+        const gridWithHeader = GridUtils.addHeader(this.grid, this.header, []);
+        return createContext(gridWithHeader);
+    }
+}
+
+class StatCluster {
+    constructor(header, children) {
+        this.header = header;
+        this.children = children;
+    }
+
+    getContext() { // https://javascript.info/currying-partials
+        const createGrid = pipe(
+            map((context) => context.grid),
+            reduce((acc, grid) => GridUtils.concat(GridUtils.padRight(acc), grid)),
+            GridUtils.padSides,
+            partialRight(GridUtils.addHeader, this.header),
+        );
+        const initial = new Vector(1 + GridUtils.spacing(), GridUtils.spacing());
+        const offsetter = (size) => new Vector(0, size.col + GridUtils.spacing());
+        const contexts = this.children.map(child => child.getContext());
+        return createContext(
+            createGrid(contexts),
+            createRelativeBorders(contexts, offsetter, initial),
+        );
+    }
+}
+
 class StatisticsManager {
     constructor(assorted) {
         const sorted = assorted.toSorted((a, b) => a.date > b.date);
-        const [valid, invalid] = Errand.validator(sorted);
-        this.indent = new Indentation().next();
-        this.children = StatisticsManager.createChildren(valid, this.indent, {
+        const { valid, invalid } = Errand.validator(sorted);
+        this.children = StatisticsManager.createChildren(valid, {
             total: assorted.length,
             valid: valid.length,
             invalid: invalid.length,
         });
-    }
-
-    toString() {
-        const { current, previous } = this.indent.resolve;
-        return multiline`
-            ${this.constructor.name} {
-            ${current}children: [${objectToStr(this.children, this.indent.next())}],
-            ${previous}}`;
     }
 
     getContext() {
@@ -40,9 +95,7 @@ class StatisticsManager {
         ];
     }
 
-    static createChildren(errands, indent, lengths) {
-        const StatCluster = StatClusterBase.bind(null, indent.next().next()); // closure
-        const StatEntries = StatEntriesBase.bind(null, indent.next().next().next().next());
+    static createChildren(errands, lengths) {
         const createStatClusterVisitors = (header, visitors, modifier = x => x) => {
             const fn = mapper => entriesFrequencyCount(visitors.map(mapper)).map(modifier);
             return new StatCluster(header, [

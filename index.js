@@ -13,7 +13,7 @@ function onOpen(event) {
 }
 
 function insertGrid(sheet, first, grid) {
-    const size = Vector.sizeGrid(grid);
+    const size = Vector.gridSize(grid);
     const frame = new Frame(first, size);
     const range = frame.toRange(sheet);
     sheet.clearFormats();
