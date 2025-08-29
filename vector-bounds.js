@@ -39,8 +39,11 @@ class Vector {
     }
 
     static gridSize(grid) {
-        const { height, width } = utils.grid.info(grid);
-        return new Vector(height, width);
+        const { getHeight, getWidth } = utils.grid;
+        return new Vector(
+            getHeight(grid),
+            getWidth(grid),
+        );
     }
 }
 

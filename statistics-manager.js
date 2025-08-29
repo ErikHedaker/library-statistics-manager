@@ -21,16 +21,16 @@ function createRelativeBorders(contexts, offsetter, start = new Vector(0, 0)) {
     };
     const reducer = (acc, context) => {
         const size = Vector.gridSize(context.grid);
-        const offsetBorder = Vector.verify(acc.offset)
-        const offsetBinder = (original) => pipe(
+        const vector = Vector.verify(acc.offset)
+        const binder = (original) => pipe(
             Vector.verify,
-            invokeProp(`add`, offsetBorder),
+            invokeProp(`add`, vector),
             original,
         );
-        const funcBordersBound = context.funcBorders.map(offsetBinder);
+        const funcBordersOffset = context.funcBorders.map(binder);
         return {
-            offset: offsetter(size).add(offsetBorder),
-            funcBorders: acc.funcBorders.concat(funcBordersBound),
+            offset: offsetter(size).add(vector),
+            funcBorders: acc.funcBorders.concat(funcBordersOffset),
         };
     };
     return contexts.reduce(reducer, initial).funcBorders;
@@ -57,8 +57,8 @@ class StatCluster {
     getContext() { // https://javascript.info/currying-partials
         const createGrid = pipe(
             map((context) => context.grid),
-            reduce((acc, grid) => utils.grid.concat(utils.grid.padRight(acc), grid)),
-            utils.grid.padSides,
+            reduce((acc, grid) => utils.grid.concat(utils.grid.pad.right(acc), grid)),
+            utils.grid.pad.sides,
             partialRight(utils.grid.insertHeader, this.header),
         );
         const diff = utils.grid.spacing;

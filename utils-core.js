@@ -67,10 +67,6 @@ function dataType(arg) {
     return isObj(arg) ? Object.prototype.toString.call(arg).slice(8, -1) : typeof arg;
 }
 
-function toStringProperties(obj) {
-    return `${obj.constructor.name} { ${entriesToStr(Object.entries(obj))} }`;
-}
-
 function entriesToStr(entries, prefix = ``, suffix = ``, separator = `, `) {
     return entries.map(
         ([key, value]) => `${prefix}${key}: [${String(value)}]${suffix}`

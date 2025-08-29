@@ -5,8 +5,6 @@ function onOpen(event) {
     const errands = Errand.fromRows(data);
     const manager = new StatisticsManager(errands);
     const { grid, funcBorders } = manager.getContext();
-    const info = utils.grid.info(grid).str;
-    console.log(info);
     insertGrid(dest, first, grid);
     insertBorders(dest, first, funcBorders);
     setRowDebugger(dest);
