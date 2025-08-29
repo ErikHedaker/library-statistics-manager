@@ -16,8 +16,12 @@ function truncate(value, decimals) {
 //            Predicate
 // ====================
 
-function isObj(arg) {
-    return Boolean(arg) && typeof arg === `object`;
+function isObj(value) {
+    return Boolean(value) && typeof value === `object`;
+}
+
+function notNullish(value) {
+    return value != null;
 }
 
 

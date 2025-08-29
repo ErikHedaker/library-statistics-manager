@@ -2,8 +2,8 @@ function onOpen(event) {
     const data = event.source.getSheetByName(`Ärende`).getDataRange().getValues();
     const dest = event.source.getSheetByName(`Statistik`);
     const first = new Vector(3, 2);
-    const errands = Errand.fromRows(data);
-    const manager = new StatManager(errands);
+    const errands = ErrandsFromRows(data);
+    const manager = StatManager(errands);
     const { grid, funcBorders } = manager.getContext();
     insertGrid(dest, first, grid);
     insertBorders(dest, first, funcBorders);
@@ -32,7 +32,7 @@ function insertBorders(sheet, first, funcBorders) {
 }
 
 function setRowDebugger(sheet) {
-    const storage = PersistentStorage();
+    const storage = PersistentMutableStorage();
     const str = storage.strDebugger();
     sheet.getRange(1, 1).setValue(str);
     console.log(str);

@@ -1,98 +1,85 @@
-class Visitor {
-    constructor(person, age) {
-        this.person = person;
-        this.age = age;
-    }
+function ErrandsValidator(errands) {
+    const valid = [];
+    const invalid = [];
+    const excludeList = [`GLÖMT`, `-`];
+    const validValue = value => !excludeList.includes(value);
+    const validVisitors = visitors => visitors.flatMap(Object.values).every(validValue);
+    const validate = errand => errand.isValid && validVisitors(errand.visitors);
+    errands.forEach(errand => (validate(errand) ? valid : invalid).push(errand));
+    return { valid, invalid };
+}
 
-    isValid() {
-        return Object.values(this).every(Boolean);
-    }
+function ErrandsFromRows([headers, ...records], offset = 2) {
+    return records.map((record, index) => {
+        const zip = (header, field) => [header, record[field]];
+        const entries = headers.map(zip);
+        return Errand(entries, index + offset);
+    });
+}
 
-    static fromStrings(person, age) {
-        try {
-            const arr = {
-                person: Visitor.splitter(person),
-                age: Visitor.splitter(age),
-            };
-            const ext = {
-                person: Visitor.extender(arr.person, arr.age.length).map(substitutesCallback),
-                age: Visitor.extender(arr.age, arr.person.length),
-            };
-            return ext.person.map(
-                (person, index) => new Visitor(person, ext.age[index])
-            );
-        } catch (error) {
-            console.log(`Exception in Visitor.fromStrings:`, error)
-            return null;
-        }
-    }
+function Errand(entries, row) {
+    const record = new Map(entries);
+    const data = {
+        row,
+        date: new Date(record.get(`Datum`)),
+        location: record.get(`Plats`),
+        difficulty: record.get(`Svårighet`),
+        tags: record.get(`Taggar`).split(`, `),
+        visitors: VisitorFromStrings(
+            record.get(`Person`),
+            record.get(`Åldersgrupp`),
+        ) ?? [],
+    };
+    const primary = () => data.visitors[0];
+    const companions = () => data.visitors.slice(1);
+    const isValid = () => (
+        Object.values(data).every(notNullish) &&
+        Number.isInteger(data.row) &&
+        data.row > 0 &&
+        data.visitors instanceof Array &&
+        data.visitors.length > 0 &&
+        data.visitors.every(invokeProp(`isValid`))
+    );
+    return {
+        ...data,
+        primary,
+        companions,
+        isValid,
+    };
+}
 
-    static splitter(str, delim = `, `) {
+function Visitor(person, age) {
+    const isValid = () => Boolean(person) && Boolean(age);
+    return { person, age, isValid };
+}
+
+function VisitorFromStrings(person, age) {
+    const splitter = (str, delim = `, `) => {
         return str.split(delim).flatMap(str => {
             const matches = str.match(/(?<target>[åäö\w\s]+?)\sx(?<num>\d+)/);
             return matches ? Array(matches.groups.num).fill(matches.groups.target) : [str];
         });
-    }
-
-    static extender(array, length = 0) {
+    };
+    const extender = (array, length = 0) => {
         const last = array.at(-1);
         const add = Math.max(length - array.length, 0);
-        return array.concat(
-            Array(add).fill(last)
-        );
+        const filler = Array(add).fill(last);
+        return array.concat(filler);
+    };
+    try {
+        const arr = {
+            person: splitter(person),
+            age: splitter(age),
+        };
+        const ext = {
+            person: extender(arr.person, arr.age.length).map(substitutesCallback),
+            age: extender(arr.age, arr.person.length),
+        };
+        return ext.person.map((person, index) => Visitor(person, ext.age[index]));
+    } catch (error) {
+        console.log(`Exception caught in ${VisitorFromStrings.name}: [${error}]`);
     }
-}
-
-class Errand {
-    constructor(entries, row) {
-        const dict = new Map(entries);
-        this.row = row;
-        this.date = new Date(dict.get(`Datum`));
-        this.location = dict.get(`Plats`);
-        this.difficulty = dict.get(`Svårighet`);
-        this.tags = dict.get(`Taggar`).split(`, `);
-        this.visitors = Visitor.fromStrings(
-            dict.get(`Person`),
-            dict.get(`Åldersgrupp`),
-        ) ?? [];
-    }
-
-    get primary() {
-        return this.visitors[0];
-    }
-
-    get companions() {
-        return this.visitors.slice(1);
-    }
-
-    isValid() {
-        return (
-            Object.values(this).every(value => value != null) &&
-            Number.isInteger(this.row) &&
-            this.row > 0 &&
-            this.visitors instanceof Array &&
-            this.visitors.length > 0 &&
-            this.visitors.every(visitor => visitor.isValid())
-        );
-    }
-
-    static fromRows([headers, ...rows]) {
-        return rows.map((row, indexRow) => {
-            const entries = headers.map((header, indexHeader) => [header, row[indexHeader]]);
-            return new Errand(entries, indexRow + 2);
-        });
-    }
-
-    static validator(errands) {
-        const valid = [];
-        const invalid = [];
-        const excludeList = [`GLÖMT`, `-`];
-        const validValue = value => !excludeList.includes(value);
-        const validVisitors = visitors => visitors.flatMap(Object.values).every(validValue);
-        const validate = errand => errand.isValid && validVisitors(errand.visitors);
-        errands.forEach(errand => (validate(errand) ? valid : invalid).push(errand));
-        return { valid, invalid };
-    }
+    return null;
 }
 
 /*

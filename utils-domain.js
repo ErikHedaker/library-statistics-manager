@@ -130,7 +130,7 @@ function UtilitiesForArray2D(options = {}) {
     };
 }
 
-function PersistentStorage() {
+function PersistentMutableStorage() {
     const key = SpreadsheetApp.getActiveSpreadsheet().getName();
     const service = PropertiesService.getScriptProperties();
     const retrieve = () => {

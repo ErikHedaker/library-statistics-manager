@@ -249,7 +249,7 @@ function StatManager(assorted) {
         ];
     };
     const sorted = assorted.toSorted((a, b) => a.date > b.date);
-    const { valid, invalid } = Errand.validator(sorted);
+    const { valid, invalid } = ErrandsValidator(sorted);
     const lengths = {
         total: assorted.length,
         valid: valid.length,
