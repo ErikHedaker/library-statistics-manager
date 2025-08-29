@@ -3,7 +3,7 @@
 // ====================
 
 const utils = {
-    grid: ModuleGrid(),
+    grid: UtilitiesForArray2D(),
     date: {
         days: [
             `Sunday`,
@@ -75,7 +75,7 @@ function rangeToStr(range) {
 //               Module
 // ====================
 
-function ModuleGrid(options = {}) {
+function UtilitiesForArray2D(options = {}) {
     const {
         substitute = ``,
         spacing = 1,
@@ -116,7 +116,7 @@ function ModuleGrid(options = {}) {
         const joined = above.concat(below);
         return normalize(joined);
     }
-    const insertHeader = (grid, header) => normalize([[header]].concat(grid));
+    const insertHeader = (header, grid) => normalize([[header]].concat(grid));
     const join = () => null;
     return {
         getHeight,
@@ -130,7 +130,7 @@ function ModuleGrid(options = {}) {
     };
 }
 
-function ModuleStorage() {
+function PersistentStorage() {
     const key = SpreadsheetApp.getActiveSpreadsheet().getName();
     const service = PropertiesService.getScriptProperties();
     const retrieve = () => {

@@ -32,7 +32,7 @@ function insertBorders(sheet, first, funcBorders) {
 }
 
 function setRowDebugger(sheet) {
-    const storage = ModuleStorage();
+    const storage = PersistentStorage();
     const str = storage.strDebugger();
     sheet.getRange(1, 1).setValue(str);
     console.log(str);
