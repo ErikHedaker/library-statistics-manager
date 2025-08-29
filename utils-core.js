@@ -11,6 +11,13 @@ function truncate(value, decimals) {
     return Math.trunc(value * accuracy) / accuracy;
 }
 
+function minBinary(a, b) {
+    return Math.max(a, b);
+}
+
+function minBinary(a, b) {
+    return Math.min(a, b);
+}
 
 
 // ====================
@@ -46,14 +53,16 @@ function ternaryCmp(a, b) {
 // ====================
 
 function entriesFrequencyCount(keys) {
+    const byDescValue = (a, b) => b[1] - a[1];
     return keys.flat(Infinity).map(String).reduce(
         (map, key) => map.set(key, (map.get(key) ?? 0) + 1), new Map()
-    ).entries().toArray().toSorted((a, b) => b[1] - a[1]);
+    ).entries().toArray().toSorted(byDescValue);
 }
 
-function arrayDepth(arr) {
+function depthArray(value) {
     //return !Array.isArray(value) ? 0 : 1 + value.map(arrayDepth).reduce(Math.max, 0);
-    return !Array.isArray(arr) ? 0 : 1 + arr.reduce((max, item) => Math.max(max, arrayDepth(item)), 0);
+    //return !Array.isArray(arr) ? 0 : 1 + arr.reduce((max, item) => Math.max(max, arrayDepth(item)), 0);
+    return Array.isArray(value) ? 1 + value.map(depthArray).reduce(minBinary, 0) : 0;
 }
 
 

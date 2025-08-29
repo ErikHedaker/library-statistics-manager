@@ -1,38 +1,41 @@
 function onOpen(event) {
     const data = event.source.getSheetByName(`Ärende`).getDataRange().getValues();
-    const destination = event.source.getSheetByName(`Statistik`);
+    const dest = event.source.getSheetByName(`Statistik`);
     const first = new Vector(3, 2);
-    const errands = Errand.fromData(data);
+    const errands = Errand.fromRows(data);
     const manager = new StatisticsManager(errands);
-    const { grid, funcs } = manager.getContext();
-    const info = GridUtils.info(grid).str;
+    const { grid, funcBorders } = manager.getContext();
+    const info = utils.grid.info(grid).str;
     console.log(info);
-    insertGrid(destination, first, grid);
-    insertBorders(destination, first, funcs);
-    debuggingIdentifier(destination);
+    insertGrid(dest, first, grid);
+    insertBorders(dest, first, funcBorders);
+    setRowDebugger(dest);
 }
 
 function insertGrid(sheet, first, grid) {
-    const size = Vector.gridSize(grid);
-    const frame = new VectorBounds(first, size);
-    const range = frame.toRange(sheet);
+    const bounds = new VectorBounds(
+        first,
+        Vector.gridSize(grid),
+    );
+    const range = bounds.toRange(sheet);
     sheet.clearFormats();
     sheet.getDataRange().clear();
     range.setValues(grid);
 }
 
-function insertBorders(sheet, first, funcs) {
-    const setBorder = (range) => range.setBorder(true, true, true, true, null, null)
+function insertBorders(sheet, first, funcBorders) {
+    const setBorder = (range) => range.setBorder(true, true, true, true, null, null);
     const toRange = pipe(
         invokeFunc(first),
         VectorBounds.verify,
-        (frame) => frame.toRange(sheet),
-    )
-    funcs.map(toRange).forEach(setBorder);
+        (bounds) => bounds.toRange(sheet),
+    );
+    funcBorders.map(toRange).forEach(setBorder);
 }
 
-function debuggingIdentifier(sheet) {
-    const str = persistent.debuggingStr();
+function setRowDebugger(sheet) {
+    const storage = ModuleStorage();
+    const str = storage.strDebugger();
     sheet.getRange(1, 1).setValue(str);
     console.log(str);
 }

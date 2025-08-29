@@ -1,50 +1,34 @@
 // ====================
-//          Mutable var
-// ====================
-
-const persistent = new (class {
-    constructor() {
-        this.service = PropertiesService.getScriptProperties();
-        this.key = SpreadsheetApp.getActiveSpreadsheet().getName();
-    }
-
-    retrieve() {
-        try {
-            const str = this.service.getProperty(this.key);
-            const value = JSON.parse(str);
-            return isObj(value) ? value : {};
-        } catch {
-            return {};
-        }
-    }
-
-    replace(value) {
-        if (isObj(value)) {
-            const str = JSON.stringify(value);
-            this.service.setProperty(this.key, str);
-        }
-    }
-
-    debuggingStr() {
-        const date = new Date().toISOString();
-        const storage = this.retrieve();
-        const seq = storage.sequential;
-        const num = Number.isInteger(seq) ? seq + 1 : 0;
-        storage.sequential = num;
-        this.replace(storage);
-        return `[debuggingStr]: [${date}]: [${num}]`;
-    }
-})();
-
-
-
-// ====================
 //             Constant
 // ====================
 
-const orderDate = {
-    days: [`Sunday`, `Monday`, `Tuesday`, `Wednesday`, `Thursday`, `Friday`, `Saturday`],
-    months: [`January`, `February`, `March`, `April`, `May`, `June`, `July`, `August`, `September`, `October`, `November`, `December`],
+const utils = {
+    grid: ModuleGrid(),
+    date: {
+      days: [
+          `Sunday`,
+          `Monday`,
+          `Tuesday`,
+          `Wednesday`,
+          `Thursday`,
+          `Friday`,
+          `Saturday`,
+      ],
+      months: [
+          `January`,
+          `February`,
+          `March`,
+          `April`,
+          `May`,
+          `June`,
+          `July`,
+          `August`,
+          `September`,
+          `October`,
+          `November`,
+          `December`,
+      ],
+    },
 };
 
 
@@ -54,11 +38,11 @@ const orderDate = {
 // ====================
 
 function indexToStrDay(index) {
-    return orderDate.days[index];
+    return utils.date.days[index];
 }
 
 function indexToStrMonth(index) {
-    return orderDate.months[index];
+    return utils.date.months[index];
 }
 
 function arrLastToStr(arr) {
@@ -88,129 +72,110 @@ function rangeToStr(range) {
 
 
 // ====================
-//             2D Array
+//               Module
 // ====================
 
-class GridUtils {
-    static debug(grid) {
-        const formatStr = str => `"${str}"`;
-        const formatRow = row => `(${row.length})<${row.map(formatStr).join(`;`)}>`;
-        const formatted = grid.map(formatRow);
-        console.log(formatted);
+function ModuleGrid(options = {}) {
+    const {
+        substitute = ``,
+        spacing = 1,
+    } = options;
+    const spacers = Array(spacing).fill([``]);
+    //return grid.map(row => row.length).reduce(Math.max, 0);
+    //return grid.reduce((accum, { length }) => Math.max(accum, length), 0);
+    const getWidthMinimum = (grid) => grid.reduce((min, { length }) => min < length ? min : length, Infinity);
+    const getWidth = (grid) => grid.reduce((max, { length }) => max > length ? max : length, 0);
+    const getHeight = (grid) => grid.length === 1 ? (grid[0].length === 0 ? 0 : 1) : grid.length;
+    const info = (grid) => {
+        const height = getHeight(grid);
+        const width = getWidth(grid);
+        const uniform = width === getWidthMinimum(grid);
+        const str = `info { height: [${height}], width: [${width}], uniform [${uniform}] }`;
+        return { width, height, uniform, str };
+    };
+    const subArray = (width) => Array(Math.max(width, 0)).fill(substitute);
+    const subGrid = (height, width) => Array(Math.max(height, 0)).fill(subArray(width, substitute));
+    const padRightExact = (grid, len) => grid.map(row => row.concat(subArray(len - row.length, substitute)));
+    const padLeftExact = (grid, len) => grid.map(row => subArray(len - row.length, substitute).concat(row));
+    const padDownExact = (grid, len) => grid.concat(subGrid(len - getHeight(grid), getWidth(grid), substitute));
+    const padUpExact = (grid, len) => subGrid(len - getHeight(grid), getWidth(grid), substitute).concat(grid);
+    const padRight = (grid, add = spacing) => padRightExact(grid, add + getWidth(grid), substitute);
+    const padLeft = (grid, add = spacing) => padLeftExact(grid, add + getWidth(grid), substitute);
+    const padDown = (grid, add = spacing) => padDownExact(grid, add + getHeight(grid), substitute);
+    const padUp = (grid, add = spacing) => padUpExact(grid, add + getHeight(grid), substitute);
+    const padSides = (grid, add = spacing) => {
+        const padder = pipe(
+            partialRight(padRight, add, substitute),
+            partialRight(padDown,  add, substitute),
+            partialRight(padLeft,  add, substitute),
+            partialRight(padUp,    add, substitute),
+        );
+        return padder(grid);
     }
-
-    static sub() {
-        return ``;
-    }
-
-    static spacing() {
-        return 1;
-    }
-
-    static spacers() {
-        return Array(GridUtils.spacing()).fill([``]);
-    }
-
-    static getMaxWidth(grid) {
-        //return grid.map(row => row.length).reduce(Math.max, 0);
-        //return grid.reduce((accum, { length }) => Math.max(accum, length), 0);
-        return grid.reduce((max, { length }) => max > length ? max : length, 0);
-    }
-
-    static getMinWidth(grid) {
-        return grid.reduce((min, { length }) => min < length ? min : length, Infinity);
-    }
-
-    static getHeight(grid) {
-        const height = grid.length;
-        return height === 1 ? (grid[0].length === 0 ? 0 : 1) : height;
-    }
-
-    static info(grid) {
-        const height = GridUtils.getHeight(grid);
-        const width = GridUtils.getMaxWidth(grid);
-        const check = GridUtils.getMinWidth(grid);
-        const uniform = width === check;
-        return {
-            width,
-            height,
-            uniform,
-            str: `Grid: { width: [${width}], height: [${height}], uniform [${uniform}] }`,
-        }
-    }
-
-    static normalize(grid) {
-        return GridUtils.info(grid).uniform ? grid : GridUtils.padRight(grid, 0);
-    }
-
-    static concat(gridLeft, gridRight, indexLeft = 0) {
+    const normalize = (grid) => info(grid).uniform ? grid : padRight(grid, 0);
+    const concat = (gridLeft, gridRight, indexLeft = 0) => {
         const gridLeftPadding = Math.max(indexLeft + gridRight.length - gridLeft.length, 0);
-        const gridLeftPadded = GridUtils.padDown(gridLeft, gridLeftPadding);
+        const gridLeftPadded = padDown(gridLeft, gridLeftPadding);
         const above = gridLeftPadded.slice(0, indexLeft);
         const below = gridLeftPadded.slice(indexLeft).map(
             (row, index) => row.concat(gridRight[index] ?? []) // nullish filler row
         );
         const joined = above.concat(below);
-        return GridUtils.normalize(joined);
+        return normalize(joined);
     }
-
-    static subArray(width, sub = GridUtils.sub()) {
-        return Array(Math.max(width, 0)).fill(sub);
-    }
-
-    static subGrid(height, width, sub = GridUtils.sub()) {
-        return Array(Math.max(height, 0)).fill(GridUtils.subArray(width, sub));
-    }
-
-    static padRightExact(grid, width, sub = GridUtils.sub()) {
-        return grid.map(row => row.concat(GridUtils.subArray(width - row.length, sub)));
-    }
-
-    static padLeftExact(grid, width, sub = GridUtils.sub()) {
-        return grid.map(row => GridUtils.subArray(width - row.length, sub).concat(row));
-    }
-
-    static padDownExact(grid, height, sub = GridUtils.sub()) {
-        return grid.concat(GridUtils.subGrid(height - grid.length, GridUtils.getMaxWidth(grid), sub));
-    }
-
-    static padUpExact(grid, height, sub = GridUtils.sub()) {
-        return GridUtils.subGrid(height - grid.length, GridUtils.getMaxWidth(grid), sub).concat(grid);
-    }
-
-    static padRight(grid, add = GridUtils.spacing(), sub = GridUtils.sub()) {
-        return GridUtils.padRightExact(grid, add + GridUtils.getMaxWidth(grid), sub);
-    }
-
-    static padLeft(grid, add = GridUtils.spacing(), sub = GridUtils.sub()) {
-        return GridUtils.padLeftExact(grid, add + GridUtils.getMaxWidth(grid), sub);
-    }
-    
-    static padDown(grid, add = GridUtils.spacing(), sub = GridUtils.sub()) {
-        return GridUtils.padDownExact(grid, add + grid.length, sub);
-    }
-
-    static padUp(grid, add = GridUtils.spacing(), sub = GridUtils.sub()) {
-        return GridUtils.padUpExact(grid, add + grid.length, sub);
-    }
-    
-    static createdGridPadded(grid, header) {
-        const gridWithPadding = GridUtils.padSides(grid);
-        return GridUtils.addHeader(gridWithPadding, header);
-    }
-
-    static addHeader(grid, header) {
+    const insertHeader = (grid, header) => {
         const gridWithHeader = [[header]].concat(grid);
-        return GridUtils.normalize(gridWithHeader);
+        return normalize(gridWithHeader);
     }
+    const insertStandard = (grid, header) => {
+        const gridWithPadding = padSides(grid);
+        return insertHeader(gridWithPadding, header);
+    }
+    const join = () => null;
+    return {
+        spacing,
+        spacers,    // join
+        info,
+        padRight,   // join
+        padSides,
+        normalize,  // join
+        concat,     // join
+        insertHeader,
+    };
+}
 
-    static padSides(grid, add = GridUtils.spacing(), sub = GridUtils.sub()) {
-        const padder = pipe(
-            partialRight(GridUtils.padRight, add, sub),
-            partialRight(GridUtils.padDown,  add, sub),
-            partialRight(GridUtils.padLeft,  add, sub),
-            partialRight(GridUtils.padUp,    add, sub),
-        );
-        return padder(grid);
+function ModuleStorage() {
+    const key = SpreadsheetApp.getActiveSpreadsheet().getName();
+    const service = PropertiesService.getScriptProperties();
+    const retrieve = () => {
+        try {
+            const str = service.getProperty(key);
+            const value = JSON.parse(str);
+            return isObj(value) ? value : {};
+        } catch {
+            return {};
+        }
     }
+    const replace = (value) => {
+        if (isObj(value)) {
+            const str = JSON.stringify(value);
+            service.setProperty(key, str);
+            return true;
+        }
+        return false;
+    }
+    const strDebugger = () => {
+        const date = new Date().toISOString();
+        const obj = retrieve();
+        const seq = obj.sequential;
+        const num = Number.isInteger(seq) ? seq + 1 : 0;
+        obj.sequential = num;
+        replace(obj);
+        return `[strDebugger]-[${date}]-[${num}]`;
+    }
+    return {
+        retrieve,
+        replace,
+        strDebugger,
+    };
 }

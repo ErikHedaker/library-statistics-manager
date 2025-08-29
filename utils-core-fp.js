@@ -10,10 +10,6 @@ function invokeProp(key, ...args) {
     return (obj) => typeof obj[key] === `function` ? obj[key](...args) : obj[key];
 }
 
-function getProp(key) {
-    return (obj) => obj[key];
-}
-
 function mapPropEntries(...callbacks) {
     return mapObject((fn) => ([k, v]) => fn([k, v]), ...callbacks);
 }
@@ -56,6 +52,10 @@ function pipeLogger(message, mapper = (x) => x) {
 //               Common
 // ====================
 
+function prop(key) {
+    return (obj) => obj[key];
+}
+
 function pipe(...callbacks) {
     return (value) => callbacks.reduce((accum, callback) => callback(accum), value);
 }
@@ -81,8 +81,7 @@ function partialRight(fn, ...bound) {
 }
 
 function curry(fn) {
-    const curried = (...args) => (
-        args.length >= fn.length ? fn(...args) : (...next) => curried(...args, ...next)
-    );
+    const satisfy = ({ length }) => length >= fn.length;
+    const curried = (...args) => satisfy(args) ? fn(...args) : (...part) => curried(...args, ...part)
     return curried; 
 }

@@ -8,37 +8,38 @@ class Visitor {
         return Object.values(this).every(Boolean);
     }
 
-    static from(personFull, ageFull) {
+    static fromStrings(person, age) {
         try {
             const array = {
-                person: Visitor.duplicatorArray(personFull),
-                age: Visitor.duplicatorArray(ageFull),
+                person: Visitor.duplicator(person),
+                age: Visitor.duplicator(age),
             };
             const normalized = {
-                person: Visitor.normalizeArray(array.person, array.age).map(substitutesCallback),
-                age: Visitor.normalizeArray(array.age, array.person),
+                person: Visitor.normalize(array.person, array.age).map(substitutesCallback),
+                age: Visitor.normalize(array.age, array.person),
             };
             return normalized.person.map(
                 (person, index) => new Visitor(person, normalized.age[index])
             );
         } catch (error) {
-            console.log(`Exception in Visitor.from:`, error)
+            console.log(`Exception in Visitor.fromStrings:`, error)
             return null;
         }
     }
 
-    static duplicatorArray(strRaw, delim = `, `) {
-        return strRaw.split(delim).flatMap(str => {
-            const result = str.match(/(?<target>[åäö\w\s]+?)\sx(?<num>\d+)/);
-            return !result ? [str] : Array(result.groups.num).fill(result.groups.target);
+    static duplicator(str, delim = `, `) {
+        return str.split(delim).flatMap(str => {
+            const matches = str.match(/(?<target>[åäö\w\s]+?)\sx(?<num>\d+)/);
+            return matches ? Array(matches.groups.num).fill(matches.groups.target) : [str];
         });
     }
 
-    static normalizeArray(arr, target) {
-        const back = arr.at(-1);
-        const add = Math.max(target.length - arr.length, 0);
-        const append = Array(add).fill(back);
-        return arr.concat(append);
+    static normalize(array, { length }) {
+        const last = array.at(-1);
+        const add = Math.max(length - array.length, 0);
+        return array.concat(
+            Array(add).fill(last)
+        );
     }
 }
 
@@ -50,7 +51,7 @@ class Errand {
         this.location = dict.get(`Plats`);
         this.difficulty = dict.get(`Svårighet`);
         this.tags = dict.get(`Taggar`).split(`, `);
-        this.visitors = Visitor.from(
+        this.visitors = Visitor.fromStrings(
             dict.get(`Person`),
             dict.get(`Åldersgrupp`),
         ) ?? [];
@@ -75,10 +76,10 @@ class Errand {
         );
     }
 
-    static fromData([headers, ...datapoints]) {
-        return datapoints.map((data, indexData) => {
-            const entries = headers.map((header, indexHeader) => [header, data[indexHeader]]);
-            return new Errand(entries, indexData + 2);
+    static fromRows([headers, ...rows]) {
+        return rows.map((row, indexRow) => {
+            const entries = headers.map((header, indexHeader) => [header, row[indexHeader]]);
+            return new Errand(entries, indexRow + 2);
         });
     }
 

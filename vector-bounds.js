@@ -39,7 +39,7 @@ class Vector {
     }
 
     static gridSize(grid) {
-        const { height, width } = GridUtils.info(grid);
+        const { height, width } = utils.grid.info(grid);
         return new Vector(height, width);
     }
 }
@@ -83,13 +83,15 @@ class VectorBounds {
             range.getLastRow(),
             range.getLastColumn(),
         );
-        const size = Vector.calcSize(first, last);
-        return new VectorBounds(first, size);
+        return new VectorBounds(
+            first,
+            Vector.calcSize(first, last),
+        );
     }
 
     static verify(value) {
         if (!(value instanceof VectorBounds)) {
-            throw `argument is not instance of class Frame`;
+            throw `argument is not instance of class VectorBounds`;
         }
         return value;
     }

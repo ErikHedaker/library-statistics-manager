@@ -1,30 +1,39 @@
-function joinContextGrids(contexts, spacers = GridUtils.spacers()) {
+function joinContextGrids(contexts) {
     const joined = contexts.map(context => context.grid).reduce(
-        (acc, grid) => acc.concat(spacers).concat(grid)
+        (acc, grid) => acc.concat(utils.grid.spacers).concat(grid)
     );
-    return GridUtils.normalize(joined);
+    return utils.grid.normalize(joined);
 }
 
-function createContext(grid, relativeBorders = [], selfBorders = null) {
+function createContext(grid, funcBordersRelative = [], funcBordersParent = null) {
     const size = Vector.gridSize(grid);
-    const selfBordersWithDefault = selfBorders ?? [
+    const funcBorders = (funcBordersParent ?? [
         (first) => new VectorBounds(Vector.verify(first), new Vector(1, size.col)),
         (first) => new VectorBounds(Vector.verify(first), size),
-    ];
-    return { grid, funcs: selfBordersWithDefault.concat(relativeBorders) };
+    ]).concat(funcBordersRelative);
+    return { grid, funcBorders };
 }
 
-function createRelativeBorders(contexts, offsetter, initial = new Vector(0, 0)) {
-    return contexts.reduce(({ bound, offset }, { grid, funcs }) => {
-        const offsetVerified = Vector.verify(offset)
-        const offsetFuncBind = func => (first) => func(offsetVerified.add(Vector.verify(first)));
-        const offsetFuncs = funcs.map(offsetFuncBind);
-        const size = Vector.gridSize(grid);
+function createRelativeBorders(contexts, offsetter, start = new Vector(0, 0)) {
+    const initial = {
+        offset: Vector.verify(start),
+        funcBorders: [],
+    };
+    const reducer = (accum, context) => {
+        const size = Vector.gridSize(context.grid);
+        const offsetBorder = Vector.verify(accum.offset)
+        const offsetBinder = (original) => pipe(
+            Vector.verify,
+            invokeProp(`add`, offsetBorder),
+            original,
+        );
+        const funcBordersBound = context.funcBorders.map(offsetBinder);
         return {
-            bound: bound.concat(offsetFuncs),
-            offset: offsetter(size).add(offsetVerified),
+            offset: offsetter(size).add(offsetBorder),
+            funcBorders: accum.funcBorders.concat(funcBordersBound),
         };
-    }, { bound: [], offset: Vector.verify(initial) }).bound;
+    };
+    return contexts.reduce(reducer, initial).funcBorders;
 }
 
 class StatEntries {
@@ -34,7 +43,7 @@ class StatEntries {
     }
     
     getContext() {
-        const gridWithHeader = GridUtils.addHeader(this.grid, this.header, []);
+        const gridWithHeader = utils.grid.insertHeader(this.grid, this.header, []);
         return createContext(gridWithHeader);
     }
 }
@@ -48,16 +57,17 @@ class StatCluster {
     getContext() { // https://javascript.info/currying-partials
         const createGrid = pipe(
             map((context) => context.grid),
-            reduce((acc, grid) => GridUtils.concat(GridUtils.padRight(acc), grid)),
-            GridUtils.padSides,
-            partialRight(GridUtils.addHeader, this.header),
+            reduce((acc, grid) => utils.grid.concat(utils.grid.padRight(acc), grid)),
+            utils.grid.padSides,
+            partialRight(utils.grid.insertHeader, this.header),
         );
-        const initial = new Vector(1 + GridUtils.spacing(), GridUtils.spacing());
-        const offsetter = (size) => new Vector(0, size.col + GridUtils.spacing());
+        const diff = utils.grid.spacing;
+        const start = new Vector(1 + diff, diff);
+        const offsetter = (size) => new Vector(0, size.col + diff);
         const contexts = this.children.map(child => child.getContext());
         return createContext(
             createGrid(contexts),
-            createRelativeBorders(contexts, offsetter, initial),
+            createRelativeBorders(contexts, offsetter, start),
         );
     }
 }
@@ -74,7 +84,7 @@ class StatisticsManager {
     }
 
     getContext() {
-        const offsetter = (size) => new Vector(size.row + GridUtils.spacing(), 0);
+        const offsetter = (size) => new Vector(size.row + utils.grid.spacing, 0);
         const contexts = this.children.map(group => group.getContext());
         return createContext(
             joinContextGrids(contexts),
