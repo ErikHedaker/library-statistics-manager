@@ -36,7 +36,7 @@ function createRelativeBorders(contexts, offsetter, start = new Vector(0, 0)) {
     return contexts.reduce(reducer, initial).funcBorders;
 }
 
-function StatisticsManager(assorted) {
+function StatManager(assorted) {
     const createChildren = (errands, lengths) => {
         const createStatClusterVisitors = (header, visitors, modifier = x => x) => {
             const fn = mapper => entriesFrequencyCount(visitors.map(mapper)).map(modifier);

@@ -3,7 +3,7 @@ function onOpen(event) {
     const dest = event.source.getSheetByName(`Statistik`);
     const first = new Vector(3, 2);
     const errands = Errand.fromRows(data);
-    const manager = new StatisticsManager(errands);
+    const manager = new StatManager(errands);
     const { grid, funcBorders } = manager.getContext();
     insertGrid(dest, first, grid);
     insertBorders(dest, first, funcBorders);
