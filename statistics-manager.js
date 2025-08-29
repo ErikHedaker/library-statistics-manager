@@ -19,9 +19,9 @@ function createRelativeBorders(contexts, offsetter, start = new Vector(0, 0)) {
         offset: Vector.verify(start),
         funcBorders: [],
     };
-    const reducer = (accum, context) => {
+    const reducer = (acc, context) => {
         const size = Vector.gridSize(context.grid);
-        const offsetBorder = Vector.verify(accum.offset)
+        const offsetBorder = Vector.verify(acc.offset)
         const offsetBinder = (original) => pipe(
             Vector.verify,
             invokeProp(`add`, offsetBorder),
@@ -30,7 +30,7 @@ function createRelativeBorders(contexts, offsetter, start = new Vector(0, 0)) {
         const funcBordersBound = context.funcBorders.map(offsetBinder);
         return {
             offset: offsetter(size).add(offsetBorder),
-            funcBorders: accum.funcBorders.concat(funcBordersBound),
+            funcBorders: acc.funcBorders.concat(funcBordersBound),
         };
     };
     return contexts.reduce(reducer, initial).funcBorders;
@@ -43,7 +43,7 @@ class StatEntries {
     }
     
     getContext() {
-        const gridWithHeader = utils.grid.insertHeader(this.grid, this.header, []);
+        const gridWithHeader = utils.grid.insertHeader(this.grid, this.header);
         return createContext(gridWithHeader);
     }
 }

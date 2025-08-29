@@ -11,14 +11,6 @@ function truncate(value, decimals) {
     return Math.trunc(value * accuracy) / accuracy;
 }
 
-function minBinary(a, b) {
-    return Math.max(a, b);
-}
-
-function minBinary(a, b) {
-    return Math.min(a, b);
-}
-
 
 // ====================
 //            Predicate
@@ -62,7 +54,7 @@ function entriesFrequencyCount(keys) {
 function depthArray(value) {
     //return !Array.isArray(value) ? 0 : 1 + value.map(arrayDepth).reduce(Math.max, 0);
     //return !Array.isArray(arr) ? 0 : 1 + arr.reduce((max, item) => Math.max(max, arrayDepth(item)), 0);
-    return Array.isArray(value) ? 1 + value.map(depthArray).reduce(minBinary, 0) : 0;
+    return Array.isArray(value) ? 1 + value.map(depthArray).reduce(minClamp, 0) : 0;
 }
 
 

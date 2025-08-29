@@ -77,14 +77,12 @@ function rangeToStr(range) {
 
 function ModuleGrid(options = {}) {
     const {
-        substitute = ``,
+        filler = ``,
         spacing = 1,
     } = options;
-    const spacers = Array(spacing).fill([``]);
-    //return grid.map(row => row.length).reduce(Math.max, 0);
-    //return grid.reduce((accum, { length }) => Math.max(accum, length), 0);
-    const getWidthMinimum = (grid) => grid.reduce((min, { length }) => min < length ? min : length, Infinity);
-    const getWidth = (grid) => grid.reduce((max, { length }) => max > length ? max : length, 0);
+    const spacers = Array(spacing).fill([filler]);
+    const getWidthMinimum = (grid) => grid.map(prop(`length`)).reduce((acc, num) => Math.min(acc, num), Infinity);
+    const getWidth = (grid) => grid.map(prop(`length`)).reduce((acc, num) => Math.max(acc, num), 0);
     const getHeight = (grid) => grid.length === 1 ? (grid[0].length === 0 ? 0 : 1) : grid.length;
     const info = (grid) => {
         const height = getHeight(grid);
@@ -93,22 +91,22 @@ function ModuleGrid(options = {}) {
         const str = `info { height: [${height}], width: [${width}], uniform [${uniform}] }`;
         return { width, height, uniform, str };
     };
-    const subArray = (width) => Array(Math.max(width, 0)).fill(substitute);
-    const subGrid = (height, width) => Array(Math.max(height, 0)).fill(subArray(width, substitute));
-    const padRightExact = (grid, len) => grid.map(row => row.concat(subArray(len - row.length, substitute)));
-    const padLeftExact = (grid, len) => grid.map(row => subArray(len - row.length, substitute).concat(row));
-    const padDownExact = (grid, len) => grid.concat(subGrid(len - getHeight(grid), getWidth(grid), substitute));
-    const padUpExact = (grid, len) => subGrid(len - getHeight(grid), getWidth(grid), substitute).concat(grid);
-    const padRight = (grid, add = spacing) => padRightExact(grid, add + getWidth(grid), substitute);
-    const padLeft = (grid, add = spacing) => padLeftExact(grid, add + getWidth(grid), substitute);
-    const padDown = (grid, add = spacing) => padDownExact(grid, add + getHeight(grid), substitute);
-    const padUp = (grid, add = spacing) => padUpExact(grid, add + getHeight(grid), substitute);
+    const subArray = (width) => Array(Math.max(width, 0)).fill(filler);
+    const subGrid = (height, width) => Array(Math.max(height, 0)).fill(subArray(width));
+    const padRightExact = (grid, len) => grid.map(row => row.concat(subArray(len - row.length)));
+    const padLeftExact = (grid, len) => grid.map(row => subArray(len - row.length).concat(row));
+    const padDownExact = (grid, len) => grid.concat(subGrid(len - getHeight(grid), getWidth(grid)));
+    const padUpExact = (grid, len) => subGrid(len - getHeight(grid), getWidth(grid)).concat(grid);
+    const padRight = (grid, add = spacing) => padRightExact(grid, add + getWidth(grid));
+    const padLeft = (grid, add = spacing) => padLeftExact(grid, add + getWidth(grid));
+    const padDown = (grid, add = spacing) => padDownExact(grid, add + getHeight(grid));
+    const padUp = (grid, add = spacing) => padUpExact(grid, add + getHeight(grid));
     const padSides = (grid, add = spacing) => {
         const padder = pipe(
-            partialRight(padRight, add, substitute),
-            partialRight(padDown,  add, substitute),
-            partialRight(padLeft,  add, substitute),
-            partialRight(padUp,    add, substitute),
+            partialRight(padRight, add),
+            partialRight(padDown,  add),
+            partialRight(padLeft,  add),
+            partialRight(padUp,    add),
         );
         return padder(grid);
     }
@@ -127,19 +125,15 @@ function ModuleGrid(options = {}) {
         const gridWithHeader = [[header]].concat(grid);
         return normalize(gridWithHeader);
     }
-    const insertStandard = (grid, header) => {
-        const gridWithPadding = padSides(grid);
-        return insertHeader(gridWithPadding, header);
-    }
     const join = () => null;
     return {
         spacing,
-        spacers,    // join
+        spacers,      // join
         info,
-        padRight,   // join
+        padRight,     // join
         padSides,
-        normalize,  // join
-        concat,     // join
+        normalize,    // join
+        concat,       // join
         insertHeader,
     };
 }

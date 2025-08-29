@@ -57,11 +57,11 @@ function prop(key) {
 }
 
 function pipe(...callbacks) {
-    return (value) => callbacks.reduce((accum, callback) => callback(accum), value);
+    return (value) => callbacks.reduce((acc, callback) => callback(acc), value);
 }
 
 function compose(...callbacks) {
-    return (value) => callbacks.reduceRight((accum, callback) => callback(accum), value);
+    return (value) => callbacks.reduceRight((acc, callback) => callback(acc), value);
 }
 
 function reduce(reducer, initial) {

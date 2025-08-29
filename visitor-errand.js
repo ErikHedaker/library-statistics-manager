@@ -10,16 +10,16 @@ class Visitor {
 
     static fromStrings(person, age) {
         try {
-            const array = {
-                person: Visitor.duplicator(person),
-                age: Visitor.duplicator(age),
+            const arr = {
+                person: Visitor.splitter(person),
+                age: Visitor.splitter(age),
             };
-            const normalized = {
-                person: Visitor.normalize(array.person, array.age).map(substitutesCallback),
-                age: Visitor.normalize(array.age, array.person),
+            const ext = {
+                person: Visitor.extender(arr.person, arr.age.length).map(substitutesCallback),
+                age: Visitor.extender(arr.age, arr.person.length),
             };
-            return normalized.person.map(
-                (person, index) => new Visitor(person, normalized.age[index])
+            return ext.person.map(
+                (person, index) => new Visitor(person, ext.age[index])
             );
         } catch (error) {
             console.log(`Exception in Visitor.fromStrings:`, error)
@@ -27,14 +27,14 @@ class Visitor {
         }
     }
 
-    static duplicator(str, delim = `, `) {
+    static splitter(str, delim = `, `) {
         return str.split(delim).flatMap(str => {
             const matches = str.match(/(?<target>[åäö\w\s]+?)\sx(?<num>\d+)/);
             return matches ? Array(matches.groups.num).fill(matches.groups.target) : [str];
         });
     }
 
-    static normalize(array, { length }) {
+    static extender(array, length = 0) {
         const last = array.at(-1);
         const add = Math.max(length - array.length, 0);
         return array.concat(
