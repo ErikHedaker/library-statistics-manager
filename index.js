@@ -11,12 +11,10 @@ function onOpen(event) {
 }
 
 function insertGrid(sheet, first, grid) {
-    const { gridSize } = utils.vector;
+    const { sizeOfGrid } = utils.vector;
     const { toRange } = utils.bounds;
-    const bounds = VectorBounds(
-        first,
-        gridSize(grid),
-    );
+    const size = sizeOfGrid(grid);
+    const bounds = VectorBounds(first, size);
     const range = toRange(sheet, bounds);
     sheet.clearFormats();
     sheet.getDataRange().clear();
@@ -27,9 +25,10 @@ function insertBorders(sheet, first, funcBorders) {
     const { verify, toRange } = utils.bounds;
     const setBorder = (range) => range.setBorder(true, true, true, true, null, null);
     const getRange = pipe(
-        invokeFunc(first),
+        invokeArg(first),
         verify,
         partial(toRange, sheet),
+        setBorder
     );
     funcBorders.map(getRange).forEach(setBorder);
 }

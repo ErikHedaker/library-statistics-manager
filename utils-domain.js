@@ -2,7 +2,7 @@
 //             Constant
 // ====================
 
-const utils = {
+const utils = Object.freeze({
     grid: UtilsArray2D(),
     vector: UtilsVector(),
     bounds: UtilsVectorBounds(),
@@ -31,7 +31,7 @@ const utils = {
             `December`,
         ],
     },
-};
+});
 
 
 
@@ -71,6 +71,20 @@ function rangeToStr(range) {
         first.col: [${range.getColumn()}]\n
         last.row:  [${range.getLastRow()}]\n
         last.col:  [${range.getLastColumn()}]\n`;
+}
+
+
+
+// ====================
+//               Impure
+// ====================
+
+function pipeLogger(message, mapper = (x) => x) {
+    return (arr) => {
+        const str = arr.map(mapper).join(`, `);
+        console.log(`[${pipeLogger.name}]: [${message}]: [${str}]`);
+        return arr;
+    };
 }
 
 

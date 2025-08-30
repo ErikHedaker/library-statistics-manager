@@ -42,7 +42,7 @@ function UtilsVectorBounds() {
             range.getLastRow(),
             range.getLastColumn(),
         );
-        const size = vector.calcSize(first, last);
+        const size = vector.sizeOfDiff(first, last);
         return VectorBounds(first, size);
     };
     const toRange = (sheet, bounds) => {
@@ -69,21 +69,21 @@ function UtilsVector() {
         }
         return arg;
     };
-    const calcSize = (_first, _last) => {
+    const sizeOfDiff = (pFirst, pLast) => {
         const { vector } = utils;
-        const first = vector.verify(_first);
-        const last = vector.verify(_last);
+        const first = vector.verify(pFirst);
+        const last = vector.verify(pLast);
         return Vector(
             (last.row - first.row) + 1,
             (last.col - first.col) + 1,
         );
     };
-    const gridSize = (grid) => {
+    const sizeOfGrid = (grid) => {
         const { getHeight, getWidth } = utils.grid;
         return Vector(
             getHeight(grid),
             getWidth(grid),
         );
     };
-    return { verify, calcSize, gridSize };
+    return { verify, sizeOfDiff, sizeOfGrid };
 }

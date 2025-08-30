@@ -2,7 +2,7 @@
 //          Specialized
 // ====================
 
-function invokeFunc(...args) {
+function invokeArg(...args) {
     return (fn) => fn(...args);
 }
 
@@ -33,17 +33,6 @@ function mergeSameKeyEntries(primaries, secondaries, merger) {
 
 function mergeSameKeyEntry(primary, secondary, merger) {
     return (x) => x;
-}
-
-
-
-// ====================
-//               Impure
-// ====================
-
-function pipeLogger(message, mapper = (x) => x) {
-    const out = (str) => console.log(`[${pipeLogger.name}]: [${message}]: [${str}]`);
-    return (arr) => (out(arr.map(mapper).join(`, `)), arr);
 }
 
 
