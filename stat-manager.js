@@ -1,11 +1,3 @@
-function joinGrids(grids) {
-    const { normalize, spacers } = utils.grid;
-    const joined = grids.reduce(
-        (acc, grid) => acc.concat(spacers).concat(grid)
-    );
-    return normalize(joined);
-}
-
 function createContext(grid, funcBordersPrevious = [], funcBordersParent = null) {
     const { verify, sizeOfGrid } = utils.vector;
     const funcBordersDefault = (size) => [
@@ -52,12 +44,12 @@ function StatManager(assorted) {
     };
     const children = StatManagerChildren(valid, lengths);
     const getContext = () => {
-        const { spacing } = utils.grid;
+        const { spacing, joinVerti } = utils.grid;
         const offsetter = (size) => Vector(size.row + spacing, 0);
         const contexts = children.map(invokeProp(`getContext`));
         const grids = contexts.map(prop(`grid`));
         return createContext(
-            joinGrids(grids),
+            joinVerti(grids),
             funcBordersRelativeBind(contexts, offsetter),
             [],
         );
@@ -276,7 +268,7 @@ function StatClusterVisitors(header, visitors, modifier = (x) => x) {
         const data = visitors.map(mapper);
         return entriesFrequencyCount(data).map(modifier)
     };
-    const StatEntriesBind = (tag, mapper) => StatEntries(tag, toFreq(mapper));
+    const StatEntriesBind = (str, mapper) => StatEntries(str, toFreq(mapper));
     return StatCluster(header, [
         StatEntriesBind(`Both person & age`, (x) => `${x.person} & ${x.age}`),
         StatEntriesBind(`Only person`, (x) => x.person),
@@ -286,12 +278,12 @@ function StatClusterVisitors(header, visitors, modifier = (x) => x) {
 
 function StatCluster(header, children) {
     const getContext = () => { // https://javascript.info/currying-partials
-        const { insertHeader, concat, pad, spacing } = utils.grid;
+        const { addHeader, pad, spacing, joinHoriz } = utils.grid;
         const createGrid = pipe(
             map(prop(`grid`)),
-            reduce((acc, grid) => concat(pad.right(acc), grid)),
+            joinHoriz,
             pad.sides,
-            partial(insertHeader, header),
+            addHeader(header),
         );
         const start = Vector(1 + spacing, spacing);
         const offsetter = (size) => Vector(0, size.col + spacing);
@@ -306,8 +298,8 @@ function StatCluster(header, children) {
 
 function StatEntries(header, grid) {
     const getContext = () => {
-        const { insertHeader } = utils.grid;
-        const titled = insertHeader(header, grid);
+        const { addHeader } = utils.grid;
+        const titled = addHeader(header)(grid);
         return createContext(titled);
     };
     return { getContext };

@@ -1,7 +1,7 @@
-function VectorBounds(_first, _size) {
+function VectorBounds(a, b) {
     const { verify } = utils.vector;
-    const first = verify(_first).clone();
-    const size = verify(_size).clone();
+    const first = verify(a).clone();
+    const size = verify(b).clone();
     const clone = () => VectorBounds(first, size);
     return { first, size, clone };
 }
@@ -33,7 +33,7 @@ function UtilsVectorBounds() {
         return arg;
     };
     const fromRange = (range) => {
-        const { vector } = utils;
+        const { sizeOfDiff } = utils.vector;
         const first = Vector(
             range.getRow(),
             range.getColumn(),
@@ -42,7 +42,7 @@ function UtilsVectorBounds() {
             range.getLastRow(),
             range.getLastColumn(),
         );
-        const size = vector.sizeOfDiff(first, last);
+        const size = sizeOfDiff(first, last);
         return VectorBounds(first, size);
     };
     const toRange = (sheet, bounds) => {
@@ -69,10 +69,9 @@ function UtilsVector() {
         }
         return arg;
     };
-    const sizeOfDiff = (pFirst, pLast) => {
-        const { vector } = utils;
-        const first = vector.verify(pFirst);
-        const last = vector.verify(pLast);
+    const sizeOfDiff = (a, b) => {
+        const first = verify(a);
+        const last = verify(b);
         return Vector(
             (last.row - first.row) + 1,
             (last.col - first.col) + 1,

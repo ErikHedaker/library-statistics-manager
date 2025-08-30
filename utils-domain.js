@@ -98,7 +98,7 @@ function UtilsArray2D(options = {}) {
         substitute = ``,
         spacing = 1,
     } = options;
-    const spacers = Array(spacing).fill([substitute]);
+    //const spacers = Array(spacing).fill([substitute]);
     const getHeight = (grid) => grid.length;
     const getWidth  = (grid) => grid.map(prop(`length`)).reduce((acc, num) => Math.max(acc, num), 0);
     const isTabular = (grid) => (width => grid.every(row => row.length === width))(getWidth(grid));
@@ -124,7 +124,7 @@ function UtilsArray2D(options = {}) {
         return { right, left, down, up, sides };
     })();
     const normalize = (grid) => isTabular(grid) ? grid : pad.right(grid, 0);
-    const concat = (gridLeft, gridRight, indexLeft = 0) => {
+    const concatRight = (gridLeft, gridRight, indexLeft = 0) => {
         const gridLeftPadding = Math.max(indexLeft + gridRight.length - gridLeft.length, 0);
         const gridLeftPadded = pad.down(gridLeft, gridLeftPadding);
         const above = gridLeftPadded.slice(0, indexLeft);
@@ -134,17 +134,18 @@ function UtilsArray2D(options = {}) {
         const joined = above.concat(below);
         return normalize(joined);
     }
-    const insertHeader = (header, grid) => normalize([[header]].concat(grid));
-    const join = () => null;
+    const join = (joiner) => (grids) => normalize(grids.reduce(joiner));
+    const joinVerti = join((a, b) => pad.down(a).concat(b));
+    const joinHoriz = join((a, b) => concatRight(pad.right(a), b));
+    const addHeader = (header) => (grid) => normalize([[header]].concat(grid));
     return {
+        spacing,
         getHeight,
         getWidth,
-        spacing,
-        spacers,             // join
         pad,
-        normalize,           // join
-        concat,              // join
-        insertHeader,
+        joinVerti,
+        joinHoriz,
+        addHeader,
     };
 }
 

@@ -18,16 +18,16 @@ function ErrandsFromRows([headers, ...records], offset = 2) {
 }
 
 function Errand(entries, row) {
-    const record = new Map(entries);
+    const map = new Map(entries);
     const data = {
         row,
-        date: new Date(record.get(`Datum`)),
-        location: record.get(`Plats`),
-        difficulty: record.get(`Svårighet`),
-        tags: record.get(`Taggar`).split(`, `),
+        date: new Date(map.get(`Datum`)),
+        location: map.get(`Plats`),
+        difficulty: map.get(`Svårighet`),
+        tags: map.get(`Taggar`).split(`, `),
         visitors: VisitorFromStrings(
-            record.get(`Person`),
-            record.get(`Åldersgrupp`),
+            map.get(`Person`),
+            map.get(`Åldersgrupp`),
         ) ?? [],
     };
     const primary = () => data.visitors[0];
