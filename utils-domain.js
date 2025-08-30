@@ -3,7 +3,9 @@
 // ====================
 
 const utils = {
-    grid: UtilitiesForArray2D(),
+    grid: UtilsArray2D(),
+    vector: UtilsVector(),
+    bounds: UtilsVectorBounds(),
     date: {
         days: [
             `Sunday`,
@@ -38,11 +40,13 @@ const utils = {
 // ====================
 
 function indexToStrDay(index) {
-    return utils.date.days[index];
+    const { days } = utils.date;
+    return days[index];
 }
 
 function indexToStrMonth(index) {
-    return utils.date.months[index];
+    const { months } = utils.date;
+    return months[index];
 }
 
 function arrLastToStr(arr) {
@@ -75,7 +79,7 @@ function rangeToStr(range) {
 //               Module
 // ====================
 
-function UtilitiesForArray2D(options = {}) {
+function UtilsArray2D(options = {}) {
     const {
         substitute = ``,
         spacing = 1,

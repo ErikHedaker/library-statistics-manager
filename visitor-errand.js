@@ -48,11 +48,6 @@ function Errand(entries, row) {
     };
 }
 
-function Visitor(person, age) {
-    const isValid = () => Boolean(person) && Boolean(age);
-    return { person, age, isValid };
-}
-
 function VisitorFromStrings(person, age) {
     const splitter = (str, delim = `, `) => {
         return str.split(delim).flatMap(str => {
@@ -80,6 +75,11 @@ function VisitorFromStrings(person, age) {
         console.log(`Exception caught in ${VisitorFromStrings.name}: [${error}]`);
     }
     return null;
+}
+
+function Visitor(person, age) {
+    const isValid = () => Boolean(person) && Boolean(age);
+    return { person, age, isValid };
 }
 
 /*

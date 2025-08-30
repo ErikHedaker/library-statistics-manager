@@ -1,101 +1,89 @@
-class Vector {
-    constructor(row = 0, col = 0) {
-        this._row = row;
-        this._col = col;
-    }
-
-    get row() {
-        return this._row;
-    }
-
-    get col() {
-        return this._col;
-    }
-
-    clone() {
-        return new Vector(this.row, this.col);
-    }
-
-    add(arg) {
-        const adder = Vector.verify(arg);
-        return new Vector(
-            this.row + adder.row,
-            this.col + adder.col,
-        );
-    }
-
-    static verify(value) {
-        if (!(value instanceof Vector)) {
-            throw `value is not instance of class Vector`;
-        }
-        return value;
-    }
-
-    static calcSize(first, last) {
-        return new Vector(
-            (last.row - first.row) + 1,
-            (last.col - first.col) + 1,
-        );
-    }
-
-    static gridSize(grid) {
-        const { getHeight, getWidth } = utils.grid;
-        return new Vector(
-            getHeight(grid),
-            getWidth(grid),
-        );
-    }
+function VectorBounds(_first, _size) {
+    const { verify } = utils.vector;
+    const first = verify(_first).clone();
+    const size = verify(_size).clone();
+    const clone = () => VectorBounds(first, size);
+    return { first, size, clone };
 }
 
-class VectorBounds {
-    constructor(first, size) {
-        this._first = Vector.verify(first).clone();
-        this._size = Vector.verify(size).clone();
-    }
-
-    get first() {
-        return this._first;
-    }
-
-    get size() {
-        return this._size;
-    }
-
-    clone() {
-        return new VectorBounds(
-            this.first.clone(),
-            this.size.clone(),
+function Vector(row = 0, col = 0) {
+    const { verify } = utils.vector;
+    const clone = () => Vector(row, col);
+    const add = (arg) => {
+        const adder = verify(arg);
+        return Vector(
+            row + adder.row,
+            col + adder.col,
         );
-    }
+    };
+    return { row, col, clone, add };
+}
 
-    toRange(sheet) {
-        return sheet.getRange(
-            this.first.row,
-            this.first.col,
-            this.size.row,
-            this.size.col,
+function UtilsVectorBounds() {
+    const verify = (arg) => {
+        const { verify } = utils.vector;
+        const valid = (
+            isObj(arg) &&
+            verify(arg.first) &&
+            verify(arg.size)
         );
-    }
-
-    static fromRange(range) {
-        const first = new Vector(
+        if (!valid) {
+            throw `Argument is not valid VectorBounds object`;
+        }
+        return arg;
+    };
+    const fromRange = (range) => {
+        const { vector } = utils;
+        const first = Vector(
             range.getRow(),
             range.getColumn(),
         );
-        const last = new Vector(
+        const last = Vector(
             range.getLastRow(),
             range.getLastColumn(),
         );
-        return new VectorBounds(
-            first,
-            Vector.calcSize(first, last),
+        const size = vector.calcSize(first, last);
+        return VectorBounds(first, size);
+    };
+    const toRange = (sheet, bounds) => {
+        const { first, size } = bounds;
+        return sheet.getRange(
+            first.row,
+            first.col,
+            size.row,
+            size.col,
         );
-    }
+    };
+    return { verify, fromRange, toRange };
+}
 
-    static verify(value) {
-        if (!(value instanceof VectorBounds)) {
-            throw `argument is not instance of class VectorBounds`;
+function UtilsVector() {
+    const verify = (arg) => {
+        const valid = (
+            isObj(arg) &&
+            Number.isInteger(arg.row) &&
+            Number.isInteger(arg.col)
+        );
+        if (!valid) {
+            throw `Argument is not valid Vector object`;
         }
-        return value;
-    }
+        return arg;
+    };
+    const calcSize = (_first, _last) => {
+        const { vector } = utils;
+        const first = vector.verify(_first);
+        const last = vector.verify(_last);
+        return Vector(
+            (last.row - first.row) + 1,
+            (last.col - first.col) + 1,
+        );
+    };
+    const gridSize = (grid) => {
+        const { getHeight, getWidth } = utils.grid;
+        return Vector(
+            getHeight(grid),
+            getWidth(grid),
+        );
+    };
+    return { verify, calcSize, gridSize };
 }

@@ -1,7 +1,7 @@
 function onOpen(event) {
     const data = event.source.getSheetByName(`Ärende`).getDataRange().getValues();
     const dest = event.source.getSheetByName(`Statistik`);
-    const first = new Vector(3, 2);
+    const first = Vector(3, 2);
     const errands = ErrandsFromRows(data);
     const manager = StatManager(errands);
     const { grid, funcBorders } = manager.getContext();
@@ -11,24 +11,27 @@ function onOpen(event) {
 }
 
 function insertGrid(sheet, first, grid) {
-    const bounds = new VectorBounds(
+    const { gridSize } = utils.vector;
+    const { toRange } = utils.bounds;
+    const bounds = VectorBounds(
         first,
-        Vector.gridSize(grid),
+        gridSize(grid),
     );
-    const range = bounds.toRange(sheet);
+    const range = toRange(sheet, bounds);
     sheet.clearFormats();
     sheet.getDataRange().clear();
     range.setValues(grid);
 }
 
 function insertBorders(sheet, first, funcBorders) {
+    const { verify, toRange } = utils.bounds;
     const setBorder = (range) => range.setBorder(true, true, true, true, null, null);
-    const toRange = pipe(
+    const getRange = pipe(
         invokeFunc(first),
-        VectorBounds.verify,
-        (bounds) => bounds.toRange(sheet),
+        verify,
+        partial(toRange, sheet),
     );
-    funcBorders.map(toRange).forEach(setBorder);
+    funcBorders.map(getRange).forEach(setBorder);
 }
 
 function setRowDebugger(sheet) {

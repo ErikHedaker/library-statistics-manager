@@ -1,29 +1,32 @@
-function joinContextGrids(contexts) {
-    const joined = contexts.map(context => context.grid).reduce(
-        (acc, grid) => acc.concat(utils.grid.spacers).concat(grid)
+function joinGrids(grids) {
+    const { normalize, spacers } = utils.grid;
+    const joined = grids.reduce(
+        (acc, grid) => acc.concat(spacers).concat(grid)
     );
-    return utils.grid.normalize(joined);
+    return normalize(joined);
 }
 
 function createContext(grid, funcBordersRelative = [], funcBordersParent = null) {
-    const size = Vector.gridSize(grid);
+    const { verify, gridSize } = utils.vector;
+    const size = gridSize(grid);
     const funcBorders = (funcBordersParent ?? [
-        (first) => new VectorBounds(Vector.verify(first), new Vector(1, size.col)),
-        (first) => new VectorBounds(Vector.verify(first), size),
+        (first) => VectorBounds(verify(first), Vector(1, size.col)),
+        (first) => VectorBounds(verify(first), size),
     ]).concat(funcBordersRelative);
     return { grid, funcBorders };
 }
 
-function createRelativeBorders(contexts, offsetter, start = new Vector(0, 0)) {
+function createRelativeBorders(contexts, offsetter, start = Vector(0, 0)) {
+    const { verify, gridSize } = utils.vector;
     const initial = {
-        offset: Vector.verify(start),
+        offset: verify(start),
         funcBorders: [],
     };
     const reducer = (acc, context) => {
-        const size = Vector.gridSize(context.grid);
-        const vector = Vector.verify(acc.offset)
+        const size = gridSize(context.grid);
+        const vector = verify(acc.offset);
         const binder = (original) => pipe(
-            Vector.verify,
+            verify,
             invokeProp(`add`, vector),
             original,
         );
@@ -257,10 +260,12 @@ function StatManager(assorted) {
     };
     const children = createChildren(valid, lengths);
     const getContext = () => {
-        const offsetter = (size) => new Vector(size.row + utils.grid.spacing, 0);
+        const { spacing } = utils.grid;
+        const offsetter = (size) => Vector(size.row + spacing, 0);
         const contexts = children.map(invokeProp(`getContext`));
+        const grids = contexts.map(prop(`grid`));
         return createContext(
-            joinContextGrids(contexts),
+            joinGrids(grids),
             createRelativeBorders(contexts, offsetter),
             [],
         );
@@ -270,16 +275,15 @@ function StatManager(assorted) {
 
 function StatCluster(header, children) {
     const getContext = () => { // https://javascript.info/currying-partials
-        const { insertHeader, concat, pad } = utils.grid;
+        const { insertHeader, concat, pad, spacing } = utils.grid;
         const createGrid = pipe(
             map(prop(`grid`)),
             reduce((acc, grid) => concat(pad.right(acc), grid)),
             pad.sides,
             partial(insertHeader, header),
         );
-        const diff = utils.grid.spacing;
-        const start = new Vector(1 + diff, diff);
-        const offsetter = (size) => new Vector(0, size.col + diff);
+        const start = Vector(1 + spacing, spacing);
+        const offsetter = (size) => Vector(0, size.col + spacing);
         const contexts = children.map(invokeProp(`getContext`));
         return createContext(
             createGrid(contexts),
