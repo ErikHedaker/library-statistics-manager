@@ -1,70 +1,72 @@
 function StatManager(assorted) {
-    const sorted = assorted.toSorted((a, b) => a.date > b.date);
+    const { spacing, joinVerti } = UTILS.grid;
+    const offsetter = (size) => Vector2D(size.row + spacing, 0);
+    const byDate = (a, b) => a.date > b.date;
+    const sorted = assorted.toSorted(byDate);
     const { valid, invalid } = ErrandsValidator(sorted);
-    const lengths = {
+    const children = createStatManagerChildren(valid, {
         total: assorted.length,
         valid: valid.length,
         invalid: invalid.length,
-    };
-    const children = createStatManagerChildren(valid, lengths);
+    });
+    const createGrid = pipe(
+        map(prop(`grid`)),
+        joinVerti,
+    );
     const getContext = () => {
-        const { spacing, joinVerti } = UTILS.grid;
-        const offsetter = (size) => Vector2D(size.row + spacing, 0);
         const contexts = children.map(invokeProp(`getContext`));
-        const grids = contexts.map(prop(`grid`));
-        return createContext(
-            joinVerti(grids),
-            funcBordersRelativeBind(contexts, offsetter),
-            [],
-        );
+        const append = createFuncBordersBinding(contexts, offsetter);
+        const grid = createGrid(contexts);
+        return createContext(grid, false, append);
     };
     return { getContext };
 }
 
 function StatCluster(header, children) {
     const { addHeader, pad, spacing, joinHoriz } = UTILS.grid;
+    const offsetter = (size) => Vector2D(0, size.col + spacing);
+    const margin = Vector2D(1 + spacing, spacing);
+    const createGrid = pipe(
+        map(prop(`grid`)),
+        joinHoriz,
+        pad.sides,
+        addHeader(header),
+    );
     const getContext = () => {
-        const createGrid = pipe(
-            map(prop(`grid`)),
-            joinHoriz,
-            pad.sides,
-            addHeader(header),
-        );
-        const start = Vector2D(1 + spacing, spacing);
-        const offsetter = (size) => Vector2D(0, size.col + spacing);
         const contexts = children.map(invokeProp(`getContext`));
-        return createContext(
-            createGrid(contexts),
-            funcBordersRelativeBind(contexts, offsetter, start),
-        );
+        const append = createFuncBordersBinding(contexts, offsetter, margin);
+        const grid = createGrid(contexts);
+        return createContext(grid, true, append);
     };
     return { getContext };
 }
 
-function StatEntries(header, grid) {
+function StatEntries(header, entries) {
     const { addHeader } = UTILS.grid;
     const getContext = pipe(
-        constant(grid),
+        constant(entries),
         addHeader(header),
         createContext,
     );
     return { getContext };
 }
 
-function createContext(grid, funcBordersPrevious = [], funcBordersParent = null) {
-    const { sizeOfGrid } = UTILS.vector;
-    const funcBordersDefault = (size) => [
-        (begin) => FrameVector2D(begin, Vector2D(1, size.col)),
-        (begin) => FrameVector2D(begin, size),
-    ];
-    const funcBorders = (
-        funcBordersParent ??
-        funcBordersDefault(sizeOfGrid(grid))
-    ).concat(funcBordersPrevious);
+function createContext(grid, funcBordersDefault = true, ...appends) {
+    const initial = funcBordersDefault ? createFuncBordersDefault(grid) : [];
+    const funcBorders = appends.reduce((acc, append) => acc.concat(append), initial);
     return { grid, funcBorders };
 }
 
-function funcBordersRelativeBind(contexts, offsetter, begin = Vector2D(0, 0)) {
+function createFuncBordersDefault(grid) {
+    const { sizeOfGrid } = UTILS.vector;
+    const size = sizeOfGrid(grid);
+    return [
+        (offset) => FrameVector2D(offset, Vector2D(1, size.col)),
+        (offset) => FrameVector2D(offset, size),
+    ];
+}
+
+function createFuncBordersBinding(contexts, offsetter, begin = Vector2D(0, 0)) {
     const { verify, sizeOfGrid } = UTILS.vector;
     const initial = { offset: verify(begin), funcBorders: [] };
     const reducer = (acc, ctx) => {

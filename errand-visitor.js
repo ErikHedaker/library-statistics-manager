@@ -1,3 +1,11 @@
+function ErrandsFromRecords([headers, ...records], offset = 2) {
+    return records.map((record, index) => {
+        const zip = (header, field) => [header, record[field]];
+        const entries = headers.map(zip);
+        return Errand(entries, index + offset);
+    });
+}
+
 function ErrandsValidator(errands) {
     const valid = [];
     const invalid = [];
@@ -7,14 +15,6 @@ function ErrandsValidator(errands) {
     const validate = (errand) => errand.isValid && validVisitors(errand.visitors);
     errands.forEach((errand) => (validate(errand) ? valid : invalid).push(errand));
     return { valid, invalid };
-}
-
-function ErrandsFromRows([headers, ...records], offset = 2) {
-    return records.map((record, index) => {
-        const zip = (header, field) => [header, record[field]];
-        const entries = headers.map(zip);
-        return Errand(entries, index + offset);
-    });
 }
 
 function Errand(entries, row) {

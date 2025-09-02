@@ -1,38 +1,47 @@
 // ====================
-//      Sheet - Trigger
+//        Sheet trigger
 // ====================
 
 function onOpen(event) {
-    const mutate = thrush(event.source.getSheetByName(`Statistik`));
-    const rows = event.source.getSheetByName(`Ärende`).getDataRange().getValues();
-    const errands = ErrandsFromRows(rows);
-    const manager = StatManager(errands);
-    const { grid, funcBorders } = manager.getContext();
-    const debug = Vector2D(1, 1);
-    const begin = Vector2D(3, 2);
-    [
-        (sheet) => sheet.clearFormats(),
-        (sheet) => sheet.getDataRange().clear(),
-        prepareStatistics(begin, grid),
-        ...prepareBorders(begin, funcBorders),
-        prepareDebugCell(debug),
-    ].forEach(mutate);
+    const records = event.source.getSheetByName(`Ärende`).getDataRange().getValues();
+    const mutater = event.source.getSheetByName(`Statistik`);
+    try {
+        operations(records).forEach(thrush(mutater));
+    } catch (error) {
+        const str = error.stack;
+        console.log(str);
+        mutater.getRange(1, 2).setValue(str);
+    }
 }
 
 
 
 // ====================
-//     Sheet - Mutation
+//      Sheet operation
 // ====================
 
-function prepareStatistics(begin, grid) {
+function operations(records) {
+    const errands = ErrandsFromRecords(records);
+    const { grid, funcBorders } = StatManager(errands).getContext();
+    const debugging = Vector2D(1, 2);
+    const beginning = Vector2D(3, 2);
+    return [
+        (sheet) => sheet.clearFormats(),
+        (sheet) => sheet.getDataRange().clear(),
+        ...opBorders(beginning, funcBorders),
+        opStatistics(beginning, grid),
+        opDebugCell(debugging),
+    ];
+}
+
+function opStatistics(begin, grid) {
     const { sizeOfGrid } = UTILS.vector;
     const size = sizeOfGrid(grid);
     const frame = FrameVector2D(begin, size);
     return (sheet) => frame.toRange(sheet).setValues(grid);
 }
 
-function prepareBorders(begin, funcBorders) {
+function opBorders(begin, funcBorders) {
     const { verify } = UTILS.frame;
     const args = [true, true, true, true, null, null];
     const realize = (frame) => (sheet) => frame.toRange(sheet).setBorder(...args);
@@ -44,9 +53,9 @@ function prepareBorders(begin, funcBorders) {
     return funcBorders.map(prepare);
 }
 
-function prepareDebugCell({ row, col }) {
+function opDebugCell({ row, col }) {
     const storage = PersistentMutableStorage();
-    const str = storage.strDebug();
+    const str = storage.debugStr();
     return (sheet) => {
         sheet.getRange(row, col).setValue(str);
         console.log(str);

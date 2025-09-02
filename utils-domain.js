@@ -170,18 +170,18 @@ function PersistentMutableStorage() {
         }
         return false;
     };
-    const strDebug = () => {
+    const debugStr = () => {
         const date = new Date().toISOString();
         const obj = retrieve();
         const seq = obj.sequential;
         const num = Number.isInteger(seq) ? seq + 1 : 0;
         obj.sequential = num;
         replace(obj);
-        return `[strDebugger]-[${date}]-[${num}]`;
+        return `[debugStr]-[${date}]-[${num}]`;
     };
     return {
         retrieve,
         replace,
-        strDebug,
+        debugStr,
     };
 }
