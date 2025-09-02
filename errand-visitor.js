@@ -2,10 +2,10 @@ function ErrandsValidator(errands) {
     const valid = [];
     const invalid = [];
     const excludeList = [`GLÖMT`, `-`];
-    const validValue = value => !excludeList.includes(value);
-    const validVisitors = visitors => visitors.flatMap(Object.values).every(validValue);
-    const validate = errand => errand.isValid && validVisitors(errand.visitors);
-    errands.forEach(errand => (validate(errand) ? valid : invalid).push(errand));
+    const validValue = (value) => !excludeList.includes(value);
+    const validVisitors = (visitors) => visitors.flatMap(Object.values).every(validValue);
+    const validate = (errand) => errand.isValid && validVisitors(errand.visitors);
+    errands.forEach((errand) => (validate(errand) ? valid : invalid).push(errand));
     return { valid, invalid };
 }
 
@@ -50,7 +50,7 @@ function Errand(entries, row) {
 
 function VisitorFromStrings(person, age) {
     const splitter = (str, delim = `, `) => {
-        return str.split(delim).flatMap(str => {
+        return str.split(delim).flatMap((str) => {
             const matches = str.match(/(?<target>[åäö\w\s]+?)\sx(?<num>\d+)/);
             return matches ? Array(matches.groups.num).fill(matches.groups.target) : [str];
         });

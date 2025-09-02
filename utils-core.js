@@ -77,5 +77,5 @@ function entriesToStr(entries, prefix = ``, suffix = ``, separator = `, `) {
 }
 
 function multiline({ raw }, ...args) {
-    return String.raw({ raw: raw.map(str => str.replace(/\n\s*/g, ``).replace(/\\n/g, `\n`)) }, ...args);
+    return String.raw({ raw: raw.map((str) => str.replace(/\n\s*/g, ``).replace(/\\n/g, `\n`)) }, ...args);
 }

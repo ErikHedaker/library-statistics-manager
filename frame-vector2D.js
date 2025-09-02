@@ -1,5 +1,5 @@
 function FrameVector2D(a, b) {
-    const { verify } = utils.vector;
+    const { verify } = UTILS.vector;
     const begin = verify(a).clone();
     const size = verify(b).clone();
     const clone = () => FrameVector2D(begin, size);
@@ -13,7 +13,7 @@ function FrameVector2D(a, b) {
 }
 
 function Vector2D(row = 0, col = 0) {
-    const { verify } = utils.vector;
+    const { verify } = UTILS.vector;
     const clone = () => Vector2D(row, col);
     const add = (arg) => {
         const adder = verify(arg);
@@ -27,7 +27,7 @@ function Vector2D(row = 0, col = 0) {
 
 function UtilsFrameVector2D() {
     const verify = (arg) => {
-        const { vector } = utils;
+        const { vector } = UTILS;
         const valid = (
             isObj(arg) &&
             vector.verify(arg.begin) &&
@@ -39,7 +39,7 @@ function UtilsFrameVector2D() {
         return arg;
     };
     const fromRange = (range) => {
-        const { sizeOfDiff } = utils.vector;
+        const { sizeOfDiff } = UTILS.vector;
         const begin = Vector2D(
             range.getRow(),
             range.getColumn(),
@@ -75,7 +75,7 @@ function UtilsVector2D() {
         );
     };
     const sizeOfGrid = (grid) => {
-        const { getHeight, getWidth } = utils.grid;
+        const { getHeight, getWidth } = UTILS.grid;
         return Vector2D(
             getHeight(grid),
             getWidth(grid),

@@ -22,5 +22,5 @@ const substitutes = Object.entries({
 }).map(([replacement, matching]) => ({ replacement, matching }));
 
 function substitutesCallback(str) {
-    return substitutes.find(sub => sub.matching.includes(str))?.replacement ?? str;
+    return substitutes.find((sub) => sub.matching.includes(str))?.replacement ?? str;
 }

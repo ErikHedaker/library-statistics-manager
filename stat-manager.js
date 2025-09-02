@@ -8,7 +8,7 @@ function StatManager(assorted) {
     };
     const children = createStatManagerChildren(valid, lengths);
     const getContext = () => {
-        const { spacing, joinVerti } = utils.grid;
+        const { spacing, joinVerti } = UTILS.grid;
         const offsetter = (size) => Vector2D(size.row + spacing, 0);
         const contexts = children.map(invokeProp(`getContext`));
         const grids = contexts.map(prop(`grid`));
@@ -22,7 +22,7 @@ function StatManager(assorted) {
 }
 
 function StatCluster(header, children) {
-    const { addHeader, pad, spacing, joinHoriz } = utils.grid;
+    const { addHeader, pad, spacing, joinHoriz } = UTILS.grid;
     const getContext = () => {
         const createGrid = pipe(
             map(prop(`grid`)),
@@ -42,7 +42,7 @@ function StatCluster(header, children) {
 }
 
 function StatEntries(header, grid) {
-    const { addHeader } = utils.grid;
+    const { addHeader } = UTILS.grid;
     const getContext = pipe(
         constant(grid),
         addHeader(header),
@@ -52,7 +52,7 @@ function StatEntries(header, grid) {
 }
 
 function createContext(grid, funcBordersPrevious = [], funcBordersParent = null) {
-    const { sizeOfGrid } = utils.vector;
+    const { sizeOfGrid } = UTILS.vector;
     const funcBordersDefault = (size) => [
         (begin) => FrameVector2D(begin, Vector2D(1, size.col)),
         (begin) => FrameVector2D(begin, size),
@@ -65,7 +65,7 @@ function createContext(grid, funcBordersPrevious = [], funcBordersParent = null)
 }
 
 function funcBordersRelativeBind(contexts, offsetter, begin = Vector2D(0, 0)) {
-    const { verify, sizeOfGrid } = utils.vector;
+    const { verify, sizeOfGrid } = UTILS.vector;
     const initial = { offset: verify(begin), funcBorders: [] };
     const reducer = (acc, ctx) => {
         const current = verify(acc.offset);
@@ -84,7 +84,7 @@ function funcBordersRelativeBind(contexts, offsetter, begin = Vector2D(0, 0)) {
 }
 
 function createStatManagerChildren(errands, lengths) {
-    const errandsDateStrAt = index => errands.at(index).date.toDateString();
+    const errandsDateStrAt = (index) => errands.at(index).date.toDateString();
     const mapperValuePercent = ([key, value]) => [key, toPercentage(value, errands.length)];
     const filterBelowMinimum = ([, value]) => value > (errands.length / 100.0);
 
@@ -193,15 +193,15 @@ function createStatManagerChildren(errands, lengths) {
     const entryKeyToStrDay = ([key, value]) => [indexToStrDay(key), value];
     const entryKeyToStrMonth = ([key, value]) => [indexToStrMonth(key), value];
     const standard = {
-        row: errands.map(x => x.row),
-        date: errands.map(x => x.date),
-        location: errands.map(x => x.location),
-        difficulty: errands.map(x => x.difficulty),
-        tags: errands.map(x => x.tags),
-        primary: errands.map(x => x.primary()),
+        row: errands.map((x) => x.row),
+        date: errands.map((x) => x.date),
+        location: errands.map((x) => x.location),
+        difficulty: errands.map((x) => x.difficulty),
+        tags: errands.map((x) => x.tags),
+        primary: errands.map((x) => x.primary()),
     };
     const atypical = {
-        visitors: errands.flatMap(x => x.visitors),
+        visitors: errands.flatMap((x) => x.visitors),
         hour: standard.date.map(invoke.getHours),
         day: standard.date.map(invoke.getDay),
         month: standard.date.map(invoke.getMonth),

@@ -2,7 +2,7 @@
 //             Constant
 // ====================
 
-const utils = Object.freeze({
+const UTILS = Object.freeze({
     grid: UtilsArray2D(),
     vector: UtilsVector2D(),
     frame: UtilsFrameVector2D(),
@@ -40,12 +40,12 @@ const utils = Object.freeze({
 // ====================
 
 function indexToStrDay(index) {
-    const { days } = utils.date;
+    const { days } = UTILS.date;
     return days[index];
 }
 
 function indexToStrMonth(index) {
-    const { months } = utils.date;
+    const { months } = UTILS.date;
     return months[index];
 }
 
@@ -96,19 +96,21 @@ function pipeLogger(message, mapper = (x) => x) {
 function UtilsArray2D(options = {}) {
     const {
         spacing = 1,
-        substitute = ``,
+        fillerStr = ``,
     } = options;
+    const maxClamp = (a, b = 0) => Math.max(a, b);
+    const arrClamp = (len) => Array(maxClamp(len));
     const getHeight = (grid) => grid.length;
-    const getWidth  = (grid) => grid.map(prop(`length`)).reduce((acc, num) => Math.max(acc, num), 0);
-    const isTabular = (grid) => (width => grid.every(row => row.length === width))(getWidth(grid));
-    const substituteArray = (width) => Array(Math.max(width, 0)).fill(substitute);
-    const substituteGrid = (height, width) => Array(Math.max(height, 0)).fill(substituteArray(width));
+    const getWidth  = (grid) => grid.map(({ length }) => length).reduce(maxClamp, 0);
+    const isTabular = (grid) => ((width) => grid.every(({ length }) => length === width))(getWidth(grid));
+    const fillerArray1D = (width) => arrClamp(width).fill(fillerStr);
+    const fillerArray2D = (height, width) => arrClamp(height).fill(fillerArray1D(width));
     const pad = (() => {
         const absolute = {
-            right: (grid, len) => grid.map(row => row.concat(substituteArray(len - row.length))),
-            left:  (grid, len) => grid.map(row => substituteArray(len - row.length).concat(row)),
-            down:  (grid, len) => grid.concat(substituteGrid(len - getHeight(grid), getWidth(grid))),
-            up:    (grid, len) => substituteGrid(len - getHeight(grid), getWidth(grid)).concat(grid),
+            right: (grid, len) => grid.map((row) => row.concat(fillerArray1D(len - row.length))),
+            left:  (grid, len) => grid.map((row) => fillerArray1D(len - row.length).concat(row)),
+            down:  (grid, len) => grid.concat(fillerArray2D(len - getHeight(grid), getWidth(grid))),
+            up:    (grid, len) => fillerArray2D(len - getHeight(grid), getWidth(grid)).concat(grid),
         };
         const right = (grid, add = spacing) => absolute.right(grid, add + getWidth(grid));
         const left  = (grid, add = spacing) => absolute.left(grid,  add + getWidth(grid));
@@ -123,19 +125,19 @@ function UtilsArray2D(options = {}) {
         return { right, left, down, up, sides };
     })();
     const normalize = (grid) => isTabular(grid) ? grid : pad.right(grid, 0);
-    const concat = (a, b, begin = 0) => {
+    const concatRight = (a, b, start = 0) => {
         const differ = b.length - a.length;
-        const offset = Math.max(begin + differ, 0);
+        const offset = Math.max(start + differ, 0);
         const padded = pad.down(a, offset);
         const joiner = (row, index) => row.concat(b[index])
-        const prefix = padded.slice(0, begin);
-        const suffix = padded.slice(begin).map(joiner);
+        const prefix = padded.slice(0, start);
+        const suffix = padded.slice(start).map(joiner);
         const joined = prefix.concat(suffix);
         return normalize(joined);
     }
-    const join = (joiner) => (grids) => normalize(grids.reduce(joiner));
-    const joinVerti = join((a, b) => pad.down(a).concat(b));
-    const joinHoriz = join((a, b) => concat(pad.right(a), b));
+    const joinGrids = (joiner) => (grids) => normalize(grids.reduce(joiner));
+    const joinVerti = joinGrids((a, b) => pad.down(a).concat(b));
+    const joinHoriz = joinGrids((a, b) => concatRight(pad.right(a), b));
     const addHeader = (header) => (grid) => normalize([[header]].concat(grid));
     return {
         spacing,

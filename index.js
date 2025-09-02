@@ -26,14 +26,14 @@ function onOpen(event) {
 // ====================
 
 function prepareStatistics(begin, grid) {
-    const { sizeOfGrid } = utils.vector;
+    const { sizeOfGrid } = UTILS.vector;
     const size = sizeOfGrid(grid);
     const frame = FrameVector2D(begin, size);
     return (sheet) => frame.toRange(sheet).setValues(grid);
 }
 
 function prepareBorders(begin, funcBorders) {
-    const { verify } = utils.frame;
+    const { verify } = UTILS.frame;
     const args = [true, true, true, true, null, null];
     const realize = (frame) => (sheet) => frame.toRange(sheet).setBorder(...args);
     const prepare = pipe(
