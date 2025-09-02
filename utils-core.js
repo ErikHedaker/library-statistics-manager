@@ -55,10 +55,9 @@ function entriesFrequencyCount(keys) {
     ).entries().toArray().toSorted(byDescValue);
 }
 
-function depthArray(value) {
-    //return !Array.isArray(value) ? 0 : 1 + value.map(arrayDepth).reduce(Math.max, 0);
-    //return !Array.isArray(arr) ? 0 : 1 + arr.reduce((max, item) => Math.max(max, arrayDepth(item)), 0);
-    return Array.isArray(value) ? 1 + value.map(depthArray).reduce(minClamp, 0) : 0;
+function depthOfNestedArray(value) {
+    const max = (a, b) => Math.max(a, b);
+    return Array.isArray(value) ? 1 + value.map(depthOfNestedArray).reduce(max, 0) : 0;
 }
 
 

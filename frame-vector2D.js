@@ -1,17 +1,23 @@
-function VectorBounds(a, b) {
+function FrameVector2D(a, b) {
     const { verify } = utils.vector;
-    const first = verify(a).clone();
+    const begin = verify(a).clone();
     const size = verify(b).clone();
-    const clone = () => VectorBounds(first, size);
-    return { first, size, clone };
+    const clone = () => FrameVector2D(begin, size);
+    const toRange = (sheet) => sheet.getRange(
+        begin.row,
+        begin.col,
+        size.row,
+        size.col,
+    );
+    return { begin, size, clone, toRange };
 }
 
-function Vector(row = 0, col = 0) {
+function Vector2D(row = 0, col = 0) {
     const { verify } = utils.vector;
-    const clone = () => Vector(row, col);
+    const clone = () => Vector2D(row, col);
     const add = (arg) => {
         const adder = verify(arg);
-        return Vector(
+        return Vector2D(
             row + adder.row,
             col + adder.col,
         );
@@ -19,45 +25,36 @@ function Vector(row = 0, col = 0) {
     return { row, col, clone, add };
 }
 
-function UtilsVectorBounds() {
+function UtilsFrameVector2D() {
     const verify = (arg) => {
-        const { verify } = utils.vector;
+        const { vector } = utils;
         const valid = (
             isObj(arg) &&
-            verify(arg.first) &&
-            verify(arg.size)
+            vector.verify(arg.begin) &&
+            vector.verify(arg.size)
         );
         if (!valid) {
-            throw `Argument is not valid VectorBounds object`;
+            throw `Argument is not valid FrameVector2D object`;
         }
         return arg;
     };
     const fromRange = (range) => {
         const { sizeOfDiff } = utils.vector;
-        const first = Vector(
+        const begin = Vector2D(
             range.getRow(),
             range.getColumn(),
         );
-        const last = Vector(
+        const last = Vector2D(
             range.getLastRow(),
             range.getLastColumn(),
         );
-        const size = sizeOfDiff(first, last);
-        return VectorBounds(first, size);
+        const size = sizeOfDiff(begin, last);
+        return FrameVector2D(begin, size);
     };
-    const toRange = (sheet, bounds) => {
-        const { first, size } = bounds;
-        return sheet.getRange(
-            first.row,
-            first.col,
-            size.row,
-            size.col,
-        );
-    };
-    return { verify, fromRange, toRange };
+    return { verify, fromRange };
 }
 
-function UtilsVector() {
+function UtilsVector2D() {
     const verify = (arg) => {
         const valid = (
             isObj(arg) &&
@@ -65,21 +62,21 @@ function UtilsVector() {
             Number.isInteger(arg.col)
         );
         if (!valid) {
-            throw `Argument is not valid Vector object`;
+            throw `Argument is not valid Vector2D object`;
         }
         return arg;
     };
     const sizeOfDiff = (a, b) => {
-        const first = verify(a);
+        const begin = verify(a);
         const last = verify(b);
-        return Vector(
-            (last.row - first.row) + 1,
-            (last.col - first.col) + 1,
+        return Vector2D(
+            (last.row - begin.row) + 1,
+            (last.col - begin.col) + 1,
         );
     };
     const sizeOfGrid = (grid) => {
         const { getHeight, getWidth } = utils.grid;
-        return Vector(
+        return Vector2D(
             getHeight(grid),
             getWidth(grid),
         );

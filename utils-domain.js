@@ -4,8 +4,8 @@
 
 const utils = Object.freeze({
     grid: UtilsArray2D(),
-    vector: UtilsVector(),
-    bounds: UtilsVectorBounds(),
+    vector: UtilsVector2D(),
+    frame: UtilsFrameVector2D(),
     date: {
         days: [
             `Sunday`,
@@ -67,10 +67,10 @@ function objectToStr(obj) {
 
 function rangeToStr(range) {
     return multiline`\n
-        first.row: [${range.getRow()}]\n
-        first.col: [${range.getColumn()}]\n
-        last.row:  [${range.getLastRow()}]\n
-        last.col:  [${range.getLastColumn()}]\n`;
+        begin row: [${range.getRow()}]\n
+        begin col: [${range.getColumn()}]\n
+        end   row: [${range.getLastRow()}]\n
+        end   col: [${range.getLastColumn()}]\n`;
 }
 
 
@@ -95,10 +95,9 @@ function pipeLogger(message, mapper = (x) => x) {
 
 function UtilsArray2D(options = {}) {
     const {
-        substitute = ``,
         spacing = 1,
+        substitute = ``,
     } = options;
-    //const spacers = Array(spacing).fill([substitute]);
     const getHeight = (grid) => grid.length;
     const getWidth  = (grid) => grid.map(prop(`length`)).reduce((acc, num) => Math.max(acc, num), 0);
     const isTabular = (grid) => (width => grid.every(row => row.length === width))(getWidth(grid));
@@ -124,19 +123,19 @@ function UtilsArray2D(options = {}) {
         return { right, left, down, up, sides };
     })();
     const normalize = (grid) => isTabular(grid) ? grid : pad.right(grid, 0);
-    const concatRight = (gridLeft, gridRight, indexLeft = 0) => {
-        const gridLeftPadding = Math.max(indexLeft + gridRight.length - gridLeft.length, 0);
-        const gridLeftPadded = pad.down(gridLeft, gridLeftPadding);
-        const above = gridLeftPadded.slice(0, indexLeft);
-        const below = gridLeftPadded.slice(indexLeft).map(
-            (row, index) => row.concat(gridRight[index] ?? []) // nullish filler row
-        );
-        const joined = above.concat(below);
+    const concat = (a, b, begin = 0) => {
+        const differ = b.length - a.length;
+        const offset = Math.max(begin + differ, 0);
+        const padded = pad.down(a, offset);
+        const joiner = (row, index) => row.concat(b[index])
+        const prefix = padded.slice(0, begin);
+        const suffix = padded.slice(begin).map(joiner);
+        const joined = prefix.concat(suffix);
         return normalize(joined);
     }
     const join = (joiner) => (grids) => normalize(grids.reduce(joiner));
     const joinVerti = join((a, b) => pad.down(a).concat(b));
-    const joinHoriz = join((a, b) => concatRight(pad.right(a), b));
+    const joinHoriz = join((a, b) => concat(pad.right(a), b));
     const addHeader = (header) => (grid) => normalize([[header]].concat(grid));
     return {
         spacing,
@@ -169,7 +168,7 @@ function PersistentMutableStorage() {
         }
         return false;
     };
-    const strDebugger = () => {
+    const strDebug = () => {
         const date = new Date().toISOString();
         const obj = retrieve();
         const seq = obj.sequential;
@@ -181,6 +180,6 @@ function PersistentMutableStorage() {
     return {
         retrieve,
         replace,
-        strDebugger,
+        strDebug,
     };
 }

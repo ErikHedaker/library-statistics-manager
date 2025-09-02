@@ -1,39 +1,3 @@
-function createContext(grid, funcBordersPrevious = [], funcBordersParent = null) {
-    const { verify, sizeOfGrid } = utils.vector;
-    const funcBordersDefault = (size) => [
-        (first) => VectorBounds(verify(first), Vector(1, size.col)),
-        (first) => VectorBounds(verify(first), size),
-    ];
-    const funcBorders = (
-        funcBordersParent ??
-        funcBordersDefault(sizeOfGrid(grid))
-    ).concat(funcBordersPrevious);
-    return { grid, funcBorders };
-}
-
-function funcBordersRelativeBind(contexts, offsetter, start = Vector(0, 0)) {
-    const { verify, sizeOfGrid } = utils.vector;
-    const initial = {
-        offset: verify(start),
-        funcBorders: [],
-    };
-    const reducer = (acc, ctx) => {
-        const size = sizeOfGrid(ctx.grid);
-        const curr = verify(acc.offset);
-        const bind = (original) => pipe(
-            verify,
-            invokeProp(`add`, curr),
-            original,
-        );
-        const funcBordersOffset = ctx.funcBorders.map(bind);
-        return {
-            offset: offsetter(size).add(curr),
-            funcBorders: acc.funcBorders.concat(funcBordersOffset),
-        };
-    };
-    return contexts.reduce(reducer, initial).funcBorders;
-}
-
 function StatManager(assorted) {
     const sorted = assorted.toSorted((a, b) => a.date > b.date);
     const { valid, invalid } = ErrandsValidator(sorted);
@@ -42,10 +6,10 @@ function StatManager(assorted) {
         valid: valid.length,
         invalid: invalid.length,
     };
-    const children = StatManagerChildren(valid, lengths);
+    const children = createStatManagerChildren(valid, lengths);
     const getContext = () => {
         const { spacing, joinVerti } = utils.grid;
-        const offsetter = (size) => Vector(size.row + spacing, 0);
+        const offsetter = (size) => Vector2D(size.row + spacing, 0);
         const contexts = children.map(invokeProp(`getContext`));
         const grids = contexts.map(prop(`grid`));
         return createContext(
@@ -57,7 +21,69 @@ function StatManager(assorted) {
     return { getContext };
 }
 
-function StatManagerChildren(errands, lengths) {
+function StatCluster(header, children) {
+    const { addHeader, pad, spacing, joinHoriz } = utils.grid;
+    const getContext = () => {
+        const createGrid = pipe(
+            map(prop(`grid`)),
+            joinHoriz,
+            pad.sides,
+            addHeader(header),
+        );
+        const start = Vector2D(1 + spacing, spacing);
+        const offsetter = (size) => Vector2D(0, size.col + spacing);
+        const contexts = children.map(invokeProp(`getContext`));
+        return createContext(
+            createGrid(contexts),
+            funcBordersRelativeBind(contexts, offsetter, start),
+        );
+    };
+    return { getContext };
+}
+
+function StatEntries(header, grid) {
+    const { addHeader } = utils.grid;
+    const getContext = pipe(
+        constant(grid),
+        addHeader(header),
+        createContext,
+    );
+    return { getContext };
+}
+
+function createContext(grid, funcBordersPrevious = [], funcBordersParent = null) {
+    const { sizeOfGrid } = utils.vector;
+    const funcBordersDefault = (size) => [
+        (begin) => FrameVector2D(begin, Vector2D(1, size.col)),
+        (begin) => FrameVector2D(begin, size),
+    ];
+    const funcBorders = (
+        funcBordersParent ??
+        funcBordersDefault(sizeOfGrid(grid))
+    ).concat(funcBordersPrevious);
+    return { grid, funcBorders };
+}
+
+function funcBordersRelativeBind(contexts, offsetter, begin = Vector2D(0, 0)) {
+    const { verify, sizeOfGrid } = utils.vector;
+    const initial = { offset: verify(begin), funcBorders: [] };
+    const reducer = (acc, ctx) => {
+        const current = verify(acc.offset);
+        const binding = (funcBorderOrig) => pipe(
+            verify,
+            invokeProp(`add`, current),
+            funcBorderOrig,
+        );
+        const funcBordersOffset = ctx.funcBorders.map(binding);
+        const funcBorders = acc.funcBorders.concat(funcBordersOffset);
+        const size = sizeOfGrid(ctx.grid);
+        const offset = offsetter(size).add(current);
+        return { offset, funcBorders };
+    };
+    return contexts.reduce(reducer, initial).funcBorders;
+}
+
+function createStatManagerChildren(errands, lengths) {
     const errandsDateStrAt = index => errands.at(index).date.toDateString();
     const mapperValuePercent = ([key, value]) => [key, toPercentage(value, errands.length)];
     const filterBelowMinimum = ([, value]) => value > (errands.length / 100.0);
@@ -268,42 +294,13 @@ function StatClusterVisitors(header, visitors, modifier = (x) => x) {
         const data = visitors.map(mapper);
         return entriesFrequencyCount(data).map(modifier)
     };
-    const StatEntriesBind = (str, mapper) => StatEntries(str, toFreq(mapper));
+    const StatEntriesBound = (str, mapper) => StatEntries(str, toFreq(mapper));
     return StatCluster(header, [
-        StatEntriesBind(`Both person & age`, (x) => `${x.person} & ${x.age}`),
-        StatEntriesBind(`Only person`, (x) => x.person),
-        StatEntriesBind(`Only age`, (x) => x.age),
+        StatEntriesBound(`Both person & age`, (x) => `${x.person} & ${x.age}`),
+        StatEntriesBound(`Only person`, (x) => x.person),
+        StatEntriesBound(`Only age`, (x) => x.age),
     ]);
 };
-
-function StatCluster(header, children) {
-    const getContext = () => { // https://javascript.info/currying-partials
-        const { addHeader, pad, spacing, joinHoriz } = utils.grid;
-        const createGrid = pipe(
-            map(prop(`grid`)),
-            joinHoriz,
-            pad.sides,
-            addHeader(header),
-        );
-        const start = Vector(1 + spacing, spacing);
-        const offsetter = (size) => Vector(0, size.col + spacing);
-        const contexts = children.map(invokeProp(`getContext`));
-        return createContext(
-            createGrid(contexts),
-            funcBordersRelativeBind(contexts, offsetter, start),
-        );
-    };
-    return { getContext };
-}
-
-function StatEntries(header, grid) {
-    const getContext = () => {
-        const { addHeader } = utils.grid;
-        const titled = addHeader(header)(grid);
-        return createContext(titled);
-    };
-    return { getContext };
-}
 
 /*
 getNotes() {

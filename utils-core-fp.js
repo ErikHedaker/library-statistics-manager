@@ -2,10 +2,6 @@
 //          Specialized
 // ====================
 
-function invokeArg(...args) {
-    return (fn) => fn(...args);
-}
-
 function invokeProp(key, ...args) {
     return (obj) => typeof obj[key] === `function` ? obj[key](...args) : obj[key];
 }
@@ -38,19 +34,27 @@ function mergeSameKeyEntry(primary, secondary, merger) {
 
 
 // ====================
-//               Common
+//           Combinator
 // ====================
+
+function thrush(...args) {
+    return (fn) => fn(...args);
+}
+
+function constant(arg) {
+    return () => arg;
+}
 
 function prop(key) {
     return (obj) => obj[key];
 }
 
 function pipe(...callbacks) {
-    return (value) => callbacks.reduce((acc, callback) => callback(acc), value);
+    return (arg) => callbacks.reduce((acc, callback) => callback(acc), arg);
 }
 
 function compose(...callbacks) {
-    return (value) => callbacks.reduceRight((acc, callback) => callback(acc), value);
+    return (arg) => callbacks.reduceRight((acc, callback) => callback(acc), arg);
 }
 
 function reduce(reducer, initial) {
@@ -61,12 +65,12 @@ function map(mapper) {
     return (arr) => arr.map(mapper);
 }
 
-function partial(fn, ...bound) {
-    return (...args) => fn(...bound, ...args);
+function partial(fn, ...preset) {
+    return (...args) => fn(...preset, ...args);
 }
 
-function partialRight(fn, ...bound) {
-    return (...args) => fn(...args, ...bound);
+function partialRight(fn, ...preset) {
+    return (...args) => fn(...args, ...preset);
 }
 
 function curry(fn) {
