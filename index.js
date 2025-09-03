@@ -17,7 +17,7 @@ function onOpen(event) {
 
 
 // ====================
-//      Sheet operation
+//       Sheet mutation
 // ====================
 
 function operations(records) {
@@ -28,20 +28,20 @@ function operations(records) {
     return [
         (sheet) => sheet.clearFormats(),
         (sheet) => sheet.getDataRange().clear(),
-        ...opBorders(beginning, funcBorders),
-        opStatistics(beginning, grid),
-        opDebugCell(debugging),
+        ...prepMutBorders(beginning, funcBorders),
+        prepMutStatistics(beginning, grid),
+        prepMutDebugCell(debugging),
     ];
 }
 
-function opStatistics(begin, grid) {
+function prepMutStatistics(begin, grid) {
     const { sizeOfGrid } = UTILS.vector;
     const size = sizeOfGrid(grid);
     const frame = FrameVector2D(begin, size);
     return (sheet) => frame.toRange(sheet).setValues(grid);
 }
 
-function opBorders(begin, funcBorders) {
+function prepMutBorders(begin, funcBorders) {
     const { verify } = UTILS.frame;
     const args = [true, true, true, true, null, null];
     const realize = (frame) => (sheet) => frame.toRange(sheet).setBorder(...args);
@@ -53,7 +53,7 @@ function opBorders(begin, funcBorders) {
     return funcBorders.map(prepare);
 }
 
-function opDebugCell({ row, col }) {
+function prepMutDebugCell({ row, col }) {
     const storage = PersistentMutableStorage();
     const str = storage.debugStr();
     return (sheet) => {
